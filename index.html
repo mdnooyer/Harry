@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ShipFit 7.28 - Flexbox Print Layout</title>
+  <title>ShipFit 7.29 - Tug Requirements Added</title>
   
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
 
@@ -77,6 +77,13 @@
         .plot-label { order: 1; text-align: center; font-weight: bold; font-size: 1.1rem; margin-bottom: 10px; color: #1565c0; }
         .canvas-wrapper { order: 2; width: 100%; text-align: center; }
         canvas { display: inline-block; border-bottom: 1px solid #eee; max-width: 100%; height: auto; }
+        
+        /* Tug Requirements op het scherm */
+        .tug-req-box {
+            order: 3; text-align: left; width: 100%; max-width: 900px; margin: 15px auto 0;
+            padding: 15px; background: #e3f2fd; border-left: 4px solid var(--primary);
+            font-size: 0.85rem; line-height: 1.4; color: #333; border-radius: 0 4px 4px 0;
+        }
     }
 
     /* === PDF PRINT STYLES - STRIKT ZONDER OVERLAP === */
@@ -189,8 +196,20 @@
           border: none !important; 
           object-fit: contain !important; 
       }
+      
+      /* 3. TUG REQUIREMENTS (Nieuw tekstblok, onder de tekening op PS-page) */
+      .tug-req-box {
+          order: 3 !important;
+          width: 100% !important;
+          font-size: 9px !important;
+          line-height: 1.2 !important;
+          color: #000 !important;
+          padding: 0 5mm !important;
+          margin-bottom: 2mm !important;
+          text-align: left !important;
+      }
 
-      /* 3. DE TITEL (Strak onderaan, uitgelijnd naar links) */
+      /* 4. DE TITEL (Strak onderaan, uitgelijnd naar links) */
       .plot-label {
           width: 100% !important; 
           text-align: left !important; 
@@ -199,7 +218,7 @@
           color: #000 !important; 
           margin: 0 !important;
           padding: 0 0 0 5mm !important;
-          order: 3 !important; /* Forceer volgorde onderaan */
+          order: 4 !important; /* Forceer volgorde helemaal onderaan */
           position: static !important;
           transform: none !important;
       }
@@ -210,7 +229,7 @@
 
   <header>
     <img src="zrlogo.png" alt="Logo" onerror="this.style.display='none'">
-    <h1>ShipFit 7.28</h1>
+    <h1>ShipFit 7.29</h1>
   </header>
 
   <div class="container">
@@ -354,9 +373,22 @@
 
     <div id="ps-page" class="print-page">
       <div class="print-landscape-container">
+          
           <div class="canvas-wrapper">
               <canvas id="canvasPS" width="950" height="350"></canvas>
           </div>
+          
+          <div class="tug-req-box">
+              <strong>Tug Requirements:</strong><br>
+              For mooring, being moored and unmooring following regulations apply:
+              <ol style="margin: 3px 0; padding-left: 20px;">
+                  <li>Berthing or unberthing should be avoided from 2 hours before HW and HW and is not allowed from 1 hour before HW and HW. HW = High Water at Vlissingen (Flushing)</li>
+                  <li>Berthing and unberthing is restricted with current from astern. In certain compelling circumstances and only after consultation and mutual agreement between captain, Pilots and Zeeland Refinery deviation of this rule is allowed.</li>
+                  <li>Number of tugboats is dependent on L.O.A. and Summer Deadweight (acc. to Lloyd’s Index).</li>
+              </ol>
+              All tugs used should be deployed as effectively as possible to keep the vessel in position alongside the jetty during berthing. Tugboats are not to be dismissed before all mooring lines are made fast and tightened, and the linesmen have returned to the jetty platform.
+          </div>
+
           <div class="plot-label">Bakboord (PS) Berthing</div>
       </div>
     </div>
