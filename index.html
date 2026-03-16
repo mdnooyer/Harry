@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ShipFit 8.1 - Perfect Landscape Pages</title>
+  <title>ShipFit 8.2 - Integrated Requirements</title>
   
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
 
@@ -57,7 +57,6 @@
     .offset-line { display: flex; justify-content: space-between; padding: 0 2px; }
     .tug-row { display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; margin-top: 5px; }
     .tug-svg { width: 90px; height: auto; }
-    .tug-note { margin-top: 15px; padding: 12px; background: #fff8e1; border: 1px solid #ffecb3; color: #795548; border-radius: 4px; font-size: 0.9rem; display: inline-block; font-weight: 500; }
     .mooring-box { background: #f9f9f9; border: 1px solid #ddd; padding: 15px; border-radius: 6px; margin-top: 10px; }
     .mooring-header { font-weight: bold; margin-bottom: 10px; text-align: center; color: #555; }
     .mooring-details { font-size: 0.9rem; line-height: 1.6; }
@@ -73,14 +72,24 @@
         .print-page { margin-bottom: 40px; position: relative; }
         .print-landscape-container { display: flex; flex-direction: column; align-items: center; }
         
-        #print-text-blocks { display: none; } /* Extra tekst is verborgen op beeldscherm */
+        #print-text-blocks { display: none; } 
         
         .plot-label { order: 1; text-align: center; font-weight: bold; font-size: 1.1rem; margin-bottom: 10px; color: #1565c0; }
         .canvas-wrapper { order: 2; width: 100%; text-align: center; }
         canvas { display: inline-block; border-bottom: 1px solid #eee; max-width: 100%; height: auto; }
+
+        /* Styling requirements tekst blok op beeldscherm */
+        .req-text {
+            margin-top: 15px; padding: 15px; background: #e3f2fd; 
+            border-left: 4px solid var(--primary); border-radius: 0 4px 4px 0;
+            font-size: 0.85rem; line-height: 1.5; color: #333;
+        }
+        .req-text p { margin: 0 0 8px 0; }
+        .req-text p:last-child { margin-bottom: 0; }
+        .req-text ol, .req-text ul { margin: 0 0 8px 0; padding-left: 20px; }
     }
 
-    /* === ABSOLUTE PDF PRINT STYLES - DOCUMENT GENERATOR === */
+    /* === ABSOLUTE PDF PRINT STYLES === */
     @media print {
       @page { margin: 10mm; size: A4 portrait; }
       body, html { width: 100%; height: auto; margin: 0; padding: 0; background: white; font-size: 11px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -110,14 +119,16 @@
       .arm-block { padding: 4px; border: 1px solid #ccc; border-radius: 4px; text-align: center; }
       .tug-svg { width: 40px; }
       .mooring-box { padding: 4px; border: 1px solid #ccc; border-radius: 4px; }
-      .tug-note { background: #fff8e1 !important; padding: 6px; border-radius: 4px; font-weight: bold; margin-top: 2mm;}
       
-      /* TEKST BLOKKEN OP PAGINA 1 */
-      #print-text-blocks { display: block; margin-top: 15mm; }
-      #print-text-blocks h2 { font-size: 14px; margin-bottom: 5px; border-bottom: 1px solid #ccc; padding-bottom: 2px; }
-      #print-text-blocks p, #print-text-blocks li { font-size: 11px; line-height: 1.4; margin-bottom: 5px; }
-      
-      .mooring-form-print { margin-bottom: 10mm; }
+      /* Styling requirements tekst blok in Print */
+      .req-text { margin-top: 3mm; font-size: 9px; line-height: 1.3; color: #000; }
+      .req-text p { margin: 0 0 2mm 0; }
+      .req-text p:last-child { margin-bottom: 0; }
+      .req-text ol, .req-text ul { margin: 0 0 2mm 0; padding-left: 5mm; }
+
+      /* Formulier tabel op print pagina 1 */
+      #print-text-blocks { display: block; margin-top: 10mm; }
+      .mooring-form-print { margin-bottom: 5mm; }
       .mf-top-table { border-collapse: collapse; width: 100%; max-width: 400px; font-size: 11px; margin-bottom: 5px; }
       .mf-top-table td { border: 1px solid #000; padding: 4px 6px; }
       .mf-top-table .mf-lbl { background: #eee; width: 120px; font-weight: bold; }
@@ -169,7 +180,7 @@
 
       .print-landscape-container canvas { 
           max-width: 100% !important; 
-          max-height: 170mm !important; /* Laat ruimte over voor de titel eronder */
+          max-height: 170mm !important; 
           width: auto !important; 
           height: auto !important; 
           border: none !important; 
@@ -193,7 +204,7 @@
 
   <header>
     <img src="zrlogo.png" alt="Logo" onerror="this.style.display='none'">
-    <h1>ShipFit 8.1</h1>
+    <h1>ShipFit 8.2</h1>
   </header>
 
   <div class="container">
@@ -317,25 +328,6 @@
                 </tr>
             </table>
             <p style="text-align: center; margin-top: 5px;">Plot your vessel <strong>Port and Starboard</strong> side in below diagram and return to your agent soonest.</p>
-        </div>
-
-        <div class="tug-req-box">
-            <h2 style="margin-top: 15px;">Tug Requirements</h2>
-            <p>For mooring, being moored and unmooring following regulations apply:</p>
-            <ol style="margin-top: 5px; padding-left: 20px;">
-                <li>Berthing or unberthing should be avoided from 2 hours before HW and HW and is not allowed from 1 hour before HW and HW.<br>HW = High Water at Vlissingen (Flushing)</li>
-                <li>Berthing and unberthing is restricted with current from astern. In certain compelling circumstances and only after consultation and mutual agreement between captain, Pilots and Zeeland Refinery deviation of this rule is allowed.</li>
-                <li>Number of tugboats is dependent on L.O.A. and Summer Deadweight (acc. to Lloyd’s Index).</li>
-            </ol>
-            <p>All tugs used should be deployed as effectively as possible to keep the vessel in position alongside the jetty during berthing. Tugboats are not to be dismissed before all mooring lines are made fast and tightened, and the linesmen have returned to the jetty platform.</p>
-
-            <h2 style="margin-top: 15px;">Minimum mooring requirements per berth</h2>
-            <p>For berthing a sufficient number of lines have to be used dependent of the size of the vessel. Recommended is:</p>
-            <ul style="margin-top: 5px; padding-left: 20px;">
-                <li><strong>Vessels over 40.000 tons SDWT:</strong> A minimum of 3 lines, 3 breast lines, 2 spring lines fore and aft (3-3-2).</li>
-                <li><strong>Vessels between 20.000 and 40.000 tons SDWT:</strong> A minimum of 2 lines, 3 breast lines, 2 spring lines fore and aft (2-3-2).</li>
-                <li><strong>Vessels less than 20.000 tons SDWT:</strong> 2 lines, 2 breast lines, 2 spring lines fore and aft (2-2-2).</li>
-            </ul>
         </div>
     </div>
   </div> 
@@ -695,17 +687,38 @@
     html += renderArms('Stuurboord (SB)');
 
     let reqTugs = (loa < 125) ? [35,35] : (loa < 150) ? [50,40] : (loa < 220) ? [60,50,50] : [60,60,60,60];
-    html += '<div class="section-title">Vereiste Sleepboten</div><div class="tug-section"><div class="tug-row">';
+    html += '<div class="section-title">Tug Requirements</div><div class="tug-section"><div class="tug-row">';
     reqTugs.forEach(t => { html += `<div class="tug-item">${getTugSVG(t)}<div class="tug-caption">BP</div></div>`; });
     html += '</div></div>';
 
-    html += '<div class="section-title">Meerpatroon (Mooring Pattern)</div>'; 
+    // Toevoeging: De "Tug Requirements" uitleg tekst, zichtbaar op scherm en print direct hieronder
+    html += `<div class="req-text">
+        <p>For mooring, being moored and unmooring following regulations apply:</p>
+        <ol>
+            <li>Berthing or unberthing should be avoided from 2 hours before HW and HW and is not allowed from 1 hour before HW and HW.<br>HW = High Water at Vlissingen (Flushing)</li>
+            <li>Berthing and unberthing is restricted with current from astern. In certain compelling circumstances and only after consultation and mutual agreement between captain, Pilots and Zeeland Refinery deviation of this rule is allowed.</li>
+            <li>Number of tugboats is dependent on L.O.A. and Summer Deadweight (acc. to Lloyd’s Index).</li>
+        </ol>
+        <p>All tugs used should be deployed as effectively as possible to keep the vessel in position alongside the jetty during berthing. Tugboats are not to be dismissed before all mooring lines are made fast and tightened, and the linesmen have returned to the jetty platform.</p>
+    </div>`;
+
+    html += '<div class="section-title">Minimum mooring requirements per berth</div>'; 
     if(deadweight > 0) { 
         let l, b, s; 
         if(deadweight < 20000) { l = 2; b = 2; s = 2; } 
         else if(deadweight <= 40000) { l = 2; b = 3; s = 2; } 
         else { l = 3; b = 3; s = 2; } 
-        html += `<div class="arm-row"><div class="arm-block mooring-box"><div class="mooring-header">Voorschip FWD</div><div class="mooring-details"><div class="mooring-line"><span>Headlines:</span> <strong>${l}</strong></div><div class="mooring-line"><span>Breast lines:</span> <strong>${b}</strong></div><div class="mooring-line"><span>Springs:</span> <strong>${s}</strong></div></div></div><div class="arm-block mooring-box"><div class="mooring-header">Achterschip (Aft)</div><div class="mooring-details"><div class="mooring-line"><span>Sternlines:</span> <strong>${l}</strong></div><div class="mooring-line"><span>Breast lines:</span> <strong>${b}</strong></div><div class="mooring-line"><span>Springs:</span> <strong>${s}</strong></div></div></div></div><div style="text-align:center; font-size:0.8rem; margin-top:5px; color:#666;">Configuratie: ${l} + ${b} + ${s} (Fore & Aft)</div>`; 
+        html += `<div class="arm-row"><div class="arm-block mooring-box"><div class="mooring-header">Voorschip FWD</div><div class="mooring-details"><div class="mooring-line"><span>Headlines:</span> <strong>${l}</strong></div><div class="mooring-line"><span>Breast lines:</span> <strong>${b}</strong></div><div class="mooring-line"><span>Springs:</span> <strong>${s}</strong></div></div></div><div class="arm-block mooring-box"><div class="mooring-header">Achterschip (Aft)</div><div class="mooring-details"><div class="mooring-line"><span>Sternlines:</span> <strong>${l}</strong></div><div class="mooring-line"><span>Breast lines:</span> <strong>${b}</strong></div><div class="mooring-line"><span>Springs:</span> <strong>${s}</strong></div></div></div></div><div style="text-align:center; font-size:0.8rem; margin-top:5px; color:#666; margin-bottom: 10px;">Configuratie: ${l} + ${b} + ${s} (Fore & Aft)</div>`; 
+        
+        // Toevoeging: De "Minimum mooring" uitleg tekst
+        html += `<div class="req-text">
+            <p>For berthing a sufficient number of lines have to be used dependent of the size of the vessel. Recommended is:</p>
+            <ul>
+                <li><strong>Vessels over 40.000 tons SDWT:</strong> A minimum of 3 lines, 3 breast lines, 2 spring lines fore and aft (3-3-2).</li>
+                <li><strong>Vessels between 20.000 and 40.000 tons SDWT:</strong> A minimum of 2 lines, 3 breast lines, 2 spring lines fore and aft (2-3-2).</li>
+                <li><strong>Vessels less than 20.000 tons SDWT:</strong> 2 lines, 2 breast lines, 2 spring lines fore and aft (2-2-2).</li>
+            </ul>
+        </div>`;
     }
 
     const resDiv = document.getElementById('resultaten'); 
