@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ShipFit 7.24 - PDF Formulier gezakt</title>
+  <title>ShipFit 7.25 - Opgeloste Pagina Layout</title>
   
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
 
@@ -13,6 +13,7 @@
     header { background: var(--primary); color: white; padding: 15px 0; text-align: center; display: flex; justify-content: center; align-items: center; gap: 15px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     header img { height: 50px; background: white; padding: 4px; border-radius: 4px; }
     header h1 { font-size: 1.8rem; margin: 0; }
+    
     .container { max-width: 950px; margin: 30px auto; background: var(--surface); padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
     
     .upload-section { background: #e3f2fd; border: 2px dashed #90caf9; padding: 20px; text-align: center; border-radius: 8px; margin-bottom: 30px; }
@@ -78,17 +79,17 @@
         canvas { display: inline-block; border-bottom: 1px solid #eee; max-width: 100%; height: auto; }
     }
 
-    /* === ROBUUSTE PDF PRINT STYLES === */
+    /* === PDF PRINT STYLES - STRIKT GEFORCEERDE 1-PAGINA LAYOUT === */
     @media print {
-      @page { margin: 0; size: A4 portrait; }
-      html, body { width: 210mm; height: 297mm; margin: 0; padding: 0; background: white; font-family: Arial, sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      @page { margin: 10mm; size: A4 portrait; }
+      body { background: white; font-size: 11px; margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       
       header, .upload-section, .buttons, hr { display: none !important; }
       
-      /* Pagina 1: Data Formulier & Controles */
+      /* Pagina 1: Vrije hoogte zodat alles past! */
       .container { 
-          width: 210mm !important; max-width: 210mm !important; margin: 0 !important; padding: 15mm !important; 
-          box-shadow: none !important; box-sizing: border-box !important; page-break-after: always; 
+          width: 100% !important; max-width: none !important; margin: 0 !important; padding: 0 !important; 
+          box-shadow: none !important; page-break-after: always; 
       }
       
       .row-flex { gap: 10px; margin-bottom: 5px; display: grid; grid-template-columns: repeat(3, 1fr); }
@@ -101,66 +102,62 @@
       .arm-block { min-height: 40px; padding: 4px; border: 1px solid #ccc; }
       .tug-svg { width: 45px; }
       .mooring-box { padding: 5px; border: 1px solid #ccc; }
+      .tug-note { background: #fff8e1 !important; }
       
       body[data-print-mode="simple"] #plot-container { display: none !important; }
       
-      /* Setup voor de Canvas Pagina's */
+      /* Setup voor Pagina 2 en 3 */
       body[data-print-mode="report"] #plot-container { 
-          display: block !important; padding: 0 !important; margin: 0 !important; border: none !important; box-shadow: none !important; 
+          display: block !important; padding: 0 !important; margin: 0 !important; border: none !important; 
       }
       
+      /* Dit is de magische wrapper. Hij is exact zo groot als A4. 
+         overflow: hidden zorgt dat de geroteerde elementen geen extra pagina triggeren. 
+      */
       .print-page { 
-          width: 210mm; height: 297mm; position: relative; overflow: hidden; background: white; page-break-after: always; 
+          width: 190mm; 
+          height: 277mm; 
+          position: relative; 
+          overflow: hidden; 
+          page-break-after: always; 
       }
       .print-page:last-child { page-break-after: auto; }
       
-      /* De container draait 90 graden en gebruikt Flexbox om de elementen perfect uit te lijnen */
+      /* De container is een landscape vak en wordt strak in het midden van de print-page gedraaid */
       .print-landscape-container {
           position: absolute; 
-          top: 148.5mm; left: 105mm; /* Exact in het midden van de A4 */
-          width: 277mm; height: 190mm; /* Maximale afmeting binnen marges */
+          top: 50%; left: 50%;
+          width: 277mm; 
+          height: 190mm; 
           transform: translate(-50%, -50%) rotate(90deg);
-          display: flex; flex-direction: column; justify-content: space-between; align-items: stretch;
-          padding: 15mm 15mm; /* Extra padding om het geheel te centreren op het papier */
-          box-sizing: border-box;
+          display: flex; flex-direction: column; justify-content: space-between; align-items: center;
+          padding: 5mm; box-sizing: border-box;
       }
 
-      /* 1. HET FORMULIER (Bovenaan het Landscape vlak) */
-      .mooring-form-print { 
-          display: block; 
-          width: 100%; 
-          color: #000; 
-          font-family: Arial, sans-serif; 
-          order: 1; 
-          margin-top: 15mm; /* TOEGEVOEGD: Formulier zakt een stukje naar beneden */
-      }
+      /* 1. HET FORMULIER */
+      .mooring-form-print { display: flex; flex-direction: column; align-items: center; width: 100%; color: #000; font-family: Arial, sans-serif; }
       
-      .mf-top-table { border-collapse: collapse; width: 100%; max-width: 450px; font-size: 12px; margin-bottom: 8px; }
-      .mf-top-table td { border: 1px solid #000; padding: 4px 8px; height: 18px; }
-      .mf-top-table .mf-lbl { background: #eee; width: 120px; font-weight: bold; }
+      .mf-top-table { border-collapse: collapse; width: 100%; max-width: 450px; font-size: 11px; margin-bottom: 2mm; }
+      .mf-top-table td { border: 1px solid #000; padding: 3px 6px; height: 16px; }
+      .mf-top-table .mf-lbl { background: #eee; width: 110px; font-weight: bold; }
       .mf-top-table .mf-noborder { border: none !important; }
       
-      .mooring-form-print h2 { font-size: 16px; margin: 8px 0; text-align: center; font-weight: bold; }
+      .mooring-form-print h2 { font-size: 14px; margin: 3mm 0; text-align: center; font-weight: bold; }
       
       .mf-main-table { border-collapse: collapse; width: 100%; border: 1px solid #000; font-size: 10px; line-height: 1.2; }
-      .mf-main-table th, .mf-main-table td { border: 1px solid #000; padding: 4px 6px; vertical-align: middle; text-align: left; }
-      .mf-main-table th { text-align: center; font-weight: bold; font-size: 11px; background: #f9f9f9; }
+      .mf-main-table th, .mf-main-table td { border: 1px solid #000; padding: 3px 5px; vertical-align: middle; text-align: left; }
+      .mf-main-table th { text-align: center; font-weight: bold; font-size: 10px; background: #f9f9f9; }
       .mf-double-line { border-top: 3px double #000; }
       
-      .mooring-form-print p { font-size: 11px; margin-top: 8px; margin-bottom: 0; text-align: center; }
+      .mooring-form-print p { font-size: 10px; margin-top: 3mm; margin-bottom: 0; text-align: center; }
 
-      /* 2. DE TEKENING (In het midden, maximaal opgerekt maar bewaart verhoudingen) */
-      .canvas-wrapper { flex-grow: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; margin: 2mm 0; order: 2; }
-      
-      .print-landscape-container canvas { 
-          width: 100% !important; max-width: 100% !important; height: auto !important; max-height: 100mm !important; 
-          border: none; object-fit: contain; margin: 0 auto; 
-      }
+      /* 2. DE TEKENING */
+      .canvas-wrapper { width: 100%; text-align: center; flex-grow: 1; display: flex; align-items: center; justify-content: center; }
+      .print-landscape-container canvas { max-width: 100% !important; height: auto !important; max-height: 110mm !important; border: none; object-fit: contain; }
 
-      /* 3. DE TITEL (Onderaan, geheel links) */
-      .print-landscape-container .plot-label {
-          width: 100%; text-align: left; font-size: 16px; font-weight: bold; color: #000; 
-          padding-left: 5mm; margin-bottom: 2mm; margin-top: 0; order: 3;
+      /* 3. DE TITEL */
+      .plot-label {
+          width: 100%; text-align: left; font-size: 14px; font-weight: bold; color: #000; padding-left: 10mm; margin: 0 0 2mm 0;
       }
     }
   </style>
@@ -169,7 +166,7 @@
 
   <header>
     <img src="zrlogo.png" alt="Logo" onerror="this.style.display='none'">
-    <h1>ShipFit 7.24</h1>
+    <h1>ShipFit 7.25</h1>
   </header>
 
   <div class="container">
@@ -315,7 +312,7 @@
           <div class="canvas-wrapper">
               <canvas id="canvasPS" width="950" height="350"></canvas>
           </div>
-          <div class="plot-label" style="margin-top: 15px;">Bakboord (PS) Berthing</div>
+          <div class="plot-label">Bakboord (PS) Berthing</div>
       </div>
     </div>
 
@@ -520,6 +517,7 @@
     // --- SCHIP TEKENEN MET OFFSET ---
     let userOff = parseFloat(document.getElementById('manualOffset').value) || 0;
     
+    // Positieve offset = Manifold is FWD van CM.
     let shiftX = (side === 'SB') ? userOff : -userOff;
     
     const armX = midX + (manifoldOffset * scale); // Groene lijn (vaste positie op laadarm)
@@ -574,13 +572,13 @@
         ctx.closePath(); ctx.fill(); ctx.stroke();
     }
 
-    // 1. Rode Lijn: CM (Vaste plek op het schip, verschuift met de boot mee als de offset verandert)
+    // 1. Rode Lijn: CM (Schip - Beweegt mee met offset)
     ctx.beginPath(); ctx.moveTo(shipZeroX, shipTopY); ctx.lineTo(shipZeroX, shipBotY);
     ctx.strokeStyle = '#d32f2f'; ctx.setLineDash([5, 3]); ctx.lineWidth = 2; ctx.stroke(); ctx.setLineDash([]);
     ctx.fillStyle = '#d32f2f'; ctx.font = 'bold 11px Arial'; ctx.textAlign = 'center'; 
     ctx.fillText("CM", shipZeroX, shipTopY - 5); 
 
-    // 2. Groene Lijn: Manifold (De plek op het schip die aansluit op de laadarm. Blijft dus op de arm staan)
+    // 2. Groene Lijn: Manifold (Vaste positie op de arm)
     ctx.beginPath(); ctx.moveTo(armX, shipTopY); ctx.lineTo(armX, shipBotY);
     ctx.strokeStyle = '#00c853'; ctx.setLineDash([5, 3]); ctx.lineWidth = 2; ctx.stroke(); ctx.setLineDash([]);
     ctx.fillStyle = '#00c853'; ctx.font = 'bold 11px Arial'; ctx.textAlign = 'center'; 
