@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ShipFit 8.11 - Ultimate Q88 Parser</title>
+  <title>ShipFit 8.12 - Ultimate Q88 Parser</title>
   
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
 
@@ -177,7 +177,7 @@
 
   <header>
     <img src="zrlogo.png" alt="Logo" onerror="this.style.display='none'">
-    <h1>ShipFit 8.11</h1>
+    <h1>ShipFit 8.12</h1>
   </header>
 
   <div class="container">
@@ -378,28 +378,25 @@
     } catch (error) { console.error(error); alert('Fout bij lezen PDF.'); } finally { document.getElementById('loading').style.display = 'none'; input.value = ''; }
   }
 
-  // --- KOGELVRIJE Q88 PARSER (V6 & V5 Support) ---
+  // --- ULTIMATE Q88 PARSER (V6 & V5 Support) ---
   function parseQ88Text(text) {
-      // 1. Maak de tekst schoon. Verwijder duizendtallen komma's om getallen goed te herkennen.
+      // Duizendtallen opschonen (13,000.50 -> 13000.50) en alle witregels tot enkele spaties maken.
       let cText = text.replace(/(\d),(\d{3})/g, '$1$2');
       cText = cText.replace(/\s+/g, ' '); 
 
-      // Functie: Zoek het trefwoord, pak maximaal 120 tekens erna en haal ALLE getallen eruit.
-      const findNextNumbers = (keyword) => {
-          try {
-              // Ontsnap speciale regex tekens uit het keyword
-              const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-              const regex = new RegExp(escapedKeyword + "\\s*[:\\-]?\\s*(.{0,120})", "i");
-              const match = cText.match(regex);
-              
-              if (match && match[1]) {
-                  // Vind alle getallen in het gematchte stuk (bijv. 182.55 of 50295.40)
-                  const numStrs = match[1].match(/\b\d+(?:[.,]\d+)?\b/g);
-                  if (numStrs) {
-                      return numStrs.map(n => parseFloat(n.replace(',', '.')));
+      // Deze functie neemt een array van Regex patronen, en probeert ze één voor één.
+      // Hij "kijkt" maximaal 600 tekens verder en zeeft daar de relevante getallen uit.
+      const extractNumbers = (regexPatterns) => {
+          for (let pattern of regexPatterns) {
+              try {
+                  const regex = new RegExp("(" + pattern + ")\\s*[:\\-]?\\s*(.{0,600})", "i");
+                  const match = cText.match(regex);
+                  if (match && match[2]) {
+                      const numStrs = match[2].match(/\b\d+(?:[.,]\d+)?\b/g);
+                      if (numStrs) return numStrs.map(n => parseFloat(n.replace(',', '.')));
                   }
-              }
-          } catch(e) {}
+              } catch(e) { console.error(e); }
+          }
           return [];
       };
 
@@ -416,68 +413,61 @@
       } catch(e) {}
 
       // 2. LOA
-      let loa = findNextNumbers("Length overall (LOA)");
-      if (loa.length === 0) loa = findNextNumbers("Length overall");
+      let loa = extractNumbers(["1\\.27\\s*Length", "Length overall \\(LOA\\)", "Length overall", "\\bLOA\\b"]);
       if (loa.length > 0) document.getElementById('loa').value = loa[0];
 
       // 3. BEAM
-      let beam = findNextNumbers("Extreme breadth (Beam)");
-      if (beam.length === 0) beam = findNextNumbers("Extreme breadth");
-      if (beam.length === 0) beam = findNextNumbers("Beam");
+      let beam = extractNumbers(["1\\.29\\s*Extreme", "Extreme breadth", "\\bBeam\\b"]);
       if (beam.length > 0) document.getElementById('beam').value = beam[0];
 
       // 4. BCM / SCM 
-      // V6 plaatst beide direct achter elkaar ("Bow to center manifold (BCM)/Stern to center manifold (SCM): 91.15 Metres 91.40 Metres")
-      let bcm = findNextNumbers("Bow to center manifold");
+      let bcm = extractNumbers(["1\\.33\\s*Bow", "Bow to center manifold", "\\bBCM\\b"]);
       if (bcm.length >= 2) {
-          // V6 structuur gevonden
           document.getElementById('bowToCm').value = bcm[0];
           document.getElementById('sternToCm').value = bcm[1];
-      } else {
-          // V5 of oudere formaten
-          if (bcm.length > 0) document.getElementById('bowToCm').value = bcm[0];
-          let scm = findNextNumbers("Stern to center manifold");
+      } else if (bcm.length === 1) {
+          document.getElementById('bowToCm').value = bcm[0];
+          let scm = extractNumbers(["Stern to center manifold", "\\bSCM\\b"]);
           if (scm.length > 0) document.getElementById('sternToCm').value = scm[0];
       }
 
-      // 5. FWD, AFT, PB
-      // V6 plaatst Lightship, Normal Ballast, Summer op 1 rij achter elkaar. We moeten de 2e kolom (Normal Ballast) hebben!
-      let fwd = findNextNumbers("Forward to mid-point manifold");
-      if (fwd.length >= 3) document.getElementById('fwd').value = fwd[1]; 
-      else if (fwd.length > 0) document.getElementById('fwd').value = fwd[0];
+      // 5. FWD, AFT, PB (Speciale afhandeling voor complexe V6 tabellen)
+      let distTable = extractNumbers(["1\\.34\\s*Parallel", "1\\.34"]);
+      if (distTable.length >= 9) {
+          // Table Layout gevonden: [FWD_L, FWD_B, FWD_S, AFT_L, AFT_B, AFT_S, PB_L, PB_B, PB_S]
+          document.getElementById('fwd').value = distTable[1];
+          document.getElementById('aft').value = distTable[4];
+          document.getElementById('pbTotal').value = distTable[7];
+      } else {
+          // Fallbacks als het geen (of een gemankeerde) tabel is
+          let fwd = extractNumbers(["Forward to mid-?point", "Forward to center", "\\bForward\\b"]);
+          if (fwd.length >= 3) document.getElementById('fwd').value = fwd[1]; 
+          else if (fwd.length > 0) document.getElementById('fwd').value = fwd[0];
 
-      let aft = findNextNumbers("Aft to mid-point manifold");
-      if (aft.length >= 3) document.getElementById('aft').value = aft[1];
-      else if (aft.length > 0) document.getElementById('aft').value = aft[0];
+          let aft = extractNumbers(["Aft to mid-?point", "Aft to center", "\\bAft\\b"]);
+          if (aft.length >= 3) document.getElementById('aft').value = aft[1];
+          else if (aft.length > 0) document.getElementById('aft').value = aft[0];
 
-      let pb = findNextNumbers("Parallel body length");
-      if (pb.length >= 3) document.getElementById('pbTotal').value = pb[1];
-      else if (pb.length > 0) document.getElementById('pbTotal').value = pb[0];
-
-      // 6. MANIFOLD
-      let mani = findNextNumbers("Manifold height above the waterline");
-      if (mani.length === 0) mani = findNextNumbers("8.24");
-      if (mani.length > 0) {
-          // Manifold maat is vaak rond de 10-18m. Filter uitschieters (zoals sectie '8.25' of buisdiktes) eruit.
-          let validMani = mani.filter(n => n < 30);
-          if (validMani.length > 0) document.getElementById('manifold').value = Math.max(...validMani);
+          let pb = extractNumbers(["Parallel body length", "Parallel body", "\\bParallel\\b"]);
+          if (pb.length >= 3) document.getElementById('pbTotal').value = pb[1];
+          else if (pb.length > 0) document.getElementById('pbTotal').value = pb[0];
       }
 
+      // 6. MANIFOLD
+      let mani = extractNumbers(["Manifold height above", "8\\.24"]);
+      // Manifold maat is vaak tussen de 5 en 25m. Filter opvallende afwijkingen (sectienummers e.d.) weg.
+      let validMani = mani.filter(n => n > 5 && n < 30);
+      if (validMani.length > 0) document.getElementById('manifold').value = Math.max(...validMani);
+
       // 7. SUMMER DWT
-      let sum = findNextNumbers("Summer:");
-      if (sum.length === 0) sum = findNextNumbers("Summer Dwt");
-      if (sum.length === 0) sum = findNextNumbers("Summer");
-      
-      // Zoek naar het eerste grote getal in de reeks (Deadweight is 10.000+)
-      let dwt = sum.find(n => n > 1000); 
+      let sum = extractNumbers(["Summer:", "Summer Dwt", "Summer", "1\\.39"]);
+      let dwt = sum.find(n => n > 1000); // Deadweight tonnage is altijd groot
       if (dwt) document.getElementById('deadweight').value = dwt;
 
       // 8. FREEBOARD
-      // V6: "Normal Ballast Condition: 7.03 Metres 12.07 Metres 29257.85 Metric Tonnes".
-      // Volgorde V6/V5 = Draft, Freeboard, Displacement. Wij willen index 1 (Freeboard).
-      let fb = findNextNumbers("Normal Ballast Condition");
+      let fb = extractNumbers(["Normal Ballast Condition", "Normal Ballast"]);
       if (fb.length >= 2) {
-          document.getElementById('freeboard').value = fb[1]; 
+          document.getElementById('freeboard').value = fb[1]; // Draft, Freeboard, Displacement
       } else if (fb.length === 1) {
           document.getElementById('freeboard').value = fb[0];
       }
