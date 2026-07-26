@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ShipFit 8.22 - English UI Update</title>
+  <title>ShipFit 8.23 - Advanced Q88 Parsing</title>
   
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
 
@@ -224,7 +224,7 @@
 
   <header>
     <img src="zrlogo.png" alt="Logo" onerror="this.style.display='none'">
-    <h1>ShipFit 8.22</h1>
+    <h1>ShipFit 8.23</h1>
   </header>
 
   <div class="container">
@@ -427,7 +427,9 @@
   }
 
   function parseQ88Text(text) {
-      let cText = text.replace(/(\d),(\d{3})/g, '$1$2');
+      // Bescherming voor de komma's: Alleen komma's weghalen als ze exact als duizendtal-scheider functioneren
+      // (dit voorkomt dat 105,24 opeens 10524 wordt zoals bij de Suez Canal Tonnage)
+      let cText = text.replace(/(\d),(\d{3})(?!\d)/g, '$1$2');
       cText = cText.replace(/\s+/g, ' '); 
 
       const extractNumbers = (regexPatterns) => {
@@ -471,38 +473,116 @@
           if (scm.length > 0) document.getElementById('sternToCm').value = scm[0];
       }
 
-      let distTable = extractNumbers(["1\\.34\\s*Parallel", "1\\.34"]);
-      if (distTable.length >= 9) {
-          document.getElementById('fwd').value = distTable[1];
-          document.getElementById('aft').value = distTable[4];
-          document.getElementById('pbTotal').value = distTable[7];
-      } else {
-          let fwd = extractNumbers(["Forward to mid-?point", "Forward to center", "\\bForward\\b"]);
-          if (fwd.length >= 3) document.getElementById('fwd').value = fwd[1]; 
-          else if (fwd.length > 0) document.getElementById('fwd').value = fwd[0];
+      // --- NIEUWE ROBUUSTE 1.34 PARALLEL BODY PARSER ---
+      let pbMatch = cText.match(/1\.34\s*Parallel[\s\S]+?(?=1\.35|$)/i);
+      if (pbMatch) {
+          let pbSection = pbMatch[0];
+          let pbNums = pbSection.match(/\b\d+(?:[.,]\d+)?\b/g);
+          
+          if (pbNums) {
+              let nums = pbNums.map(n => parseFloat(n.replace(',', '.'))).filter(n => n !== 1.34);
+              let fwd, aft, pb;
+              let found = false;
 
-          let aft = extractNumbers(["Aft to mid-?point", "Aft to center", "\\bAft\\b"]);
-          if (aft.length >= 3) document.getElementById('aft').value = aft[1];
-          else if (aft.length > 0) document.getElementById('aft').value = aft[0];
+              // Zoek naar de wiskundige relatie FWD + AFT = PB (met 0.2 marge voor afrondingen)
+              if (nums.length >= 9) {
+                  if (Math.abs(nums[0] + nums[1] - nums[2]) < 0.2 && Math.abs(nums[3] + nums[4] - nums[5]) < 0.2) {
+                      fwd = nums[3]; aft = nums[4]; pb = nums[5]; found = true; // Vertical rendering
+                  } else if (Math.abs(nums[0] + nums[3] - nums[6]) < 0.2 && Math.abs(nums[1] + nums[4] - nums[7]) < 0.2) {
+                      fwd = nums[1]; aft = nums[4]; pb = nums[7]; found = true; // Horizontal rendering
+                  }
+              }
+              if (!found && nums.length >= 6) {
+                  if (Math.abs(nums[0] + nums[1] - nums[2]) < 0.2 && Math.abs(nums[3] + nums[4] - nums[5]) < 0.2) {
+                      fwd = nums[0]; aft = nums[1]; pb = nums[2]; found = true; 
+                  } else if (Math.abs(nums[0] + nums[2] - nums[4]) < 0.2 && Math.abs(nums[1] + nums[3] - nums[5]) < 0.2) {
+                      fwd = nums[0]; aft = nums[2]; pb = nums[4]; found = true; 
+                  }
+              }
+              if (!found && nums.length >= 3) {
+                   if (Math.abs(nums[0] + nums[1] - nums[2]) < 0.2) {
+                      fwd = nums[0]; aft = nums[1]; pb = nums[2]; found = true;
+                   }
+              }
 
-          let pb = extractNumbers(["Parallel body length", "Parallel body", "\\bParallel\\b"]);
-          if (pb.length >= 3) document.getElementById('pbTotal').value = pb[1];
-          else if (pb.length > 0) document.getElementById('pbTotal').value = pb[0];
+              if (found) {
+                  document.getElementById('fwd').value = fwd;
+                  document.getElementById('aft').value = aft;
+                  document.getElementById('pbTotal').value = pb;
+              } else {
+                  // Fallback: Zoek specifiek BINNEN het 1.34 blok (voorkomt dat we trossen of tonnages pakken)
+                  const extractFromSection = (keyword) => {
+                      const regex = new RegExp("(" + keyword + ")\\s*[:\\-]?\\s*([\\s\\S]{0,150})", "i");
+                      const match = pbSection.match(regex);
+                      if (match && match[2]) {
+                          const numStrs = match[2].match(/\b\d+(?:[.,]\d+)?\b/g);
+                          if (numStrs) return numStrs.map(n => parseFloat(n.replace(',', '.')));
+                      }
+                      return [];
+                  };
+                  
+                  let fList = extractFromSection("Forward to mid-?point manifold|Forward to center|Forward");
+                  let aList = extractFromSection("Aft to mid-?point manifold|Aft to center|Aft");
+                  let pList = extractFromSection("Parallel body length|Parallel body");
+
+                  const pickBallast = (list) => {
+                      if (list.length >= 3) return list[1]; // Normal Ballast is meestal de 2e kolom
+                      if (list.length === 2) return list[0];
+                      if (list.length === 1) return list[0];
+                      return null;
+                  };
+
+                  let fV = pickBallast(fList);
+                  let aV = pickBallast(aList);
+                  let pV = pickBallast(pList);
+
+                  if (fV && fV < 400) document.getElementById('fwd').value = fV;
+                  if (aV && aV < 400) document.getElementById('aft').value = aV;
+                  if (pV && pV < 400) document.getElementById('pbTotal').value = pV;
+              }
+          }
       }
 
-      let mani = extractNumbers(["Manifold height above", "8\\.24"]);
-      let validMani = mani.filter(n => n > 5 && n < 30);
-      if (validMani.length > 0) document.getElementById('manifold').value = Math.max(...validMani);
+      let maniMatch = cText.match(/8\.24\s*Manifold height[\s\S]+?(?=8\.25|$)/i) || cText.match(/Manifold height above[\s\S]{0,100}/i);
+      if (maniMatch) {
+          let maniNums = maniMatch[0].match(/\b\d+(?:[.,]\d+)?\b/g);
+          if (maniNums) {
+              maniNums = maniNums.map(n => parseFloat(n.replace(',', '.'))).filter(n => n !== 8.24 && n > 5 && n < 30);
+              if (maniNums.length > 0) document.getElementById('manifold').value = Math.max(...maniNums);
+          }
+      } else {
+          let mani = extractNumbers(["Manifold height above", "8\\.24"]);
+          let validMani = mani.filter(n => n > 5 && n < 30);
+          if (validMani.length > 0) document.getElementById('manifold').value = Math.max(...validMani);
+      }
 
-      let sum = extractNumbers(["Summer:", "Summer Dwt", "Summer", "1\\.39"]);
-      let dwt = sum.find(n => n > 1000); 
-      if (dwt) document.getElementById('deadweight').value = dwt;
+      let loadlineMatch = cText.match(/1\.39\s*Loadline[\s\S]+?(?=1\.40|$)/i);
+      if (loadlineMatch) {
+          let llText = loadlineMatch[0];
+          let dwtNums = llText.match(/\b\d+(?:[.,]\d+)?\b/g);
+          if (dwtNums) {
+              let dwts = dwtNums.map(n => parseFloat(n.replace(',', '.'))).filter(n => n > 1000);
+              if (dwts.length > 0) document.getElementById('deadweight').value = Math.max(...dwts);
+          }
+          let fbMatch = llText.match(/Normal Ballast[\s\S]{0,150}/i);
+          if (fbMatch) {
+              let fbNums = fbMatch[0].match(/\b\d+(?:[.,]\d+)?\b/g);
+              if (fbNums) {
+                  let fbs = fbNums.map(n => parseFloat(n.replace(',', '.'))).filter(n => n > 2 && n < 25);
+                  if (fbs.length > 0) document.getElementById('freeboard').value = fbs[0];
+              }
+          }
+      } else {
+          let sum = extractNumbers(["Summer:", "Summer Dwt", "Summer", "1\\.39"]);
+          let dwt = sum.find(n => n > 1000); 
+          if (dwt) document.getElementById('deadweight').value = dwt;
 
-      let fb = extractNumbers(["Normal Ballast Condition", "Normal Ballast"]);
-      if (fb.length >= 2) {
-          document.getElementById('freeboard').value = fb[1]; 
-      } else if (fb.length === 1) {
-          document.getElementById('freeboard').value = fb[0];
+          let fb = extractNumbers(["Normal Ballast Condition", "Normal Ballast"]);
+          if (fb.length >= 2) {
+              document.getElementById('freeboard').value = fb[1]; 
+          } else if (fb.length === 1) {
+              document.getElementById('freeboard').value = fb[0];
+          }
       }
 
       handleDimChange();
@@ -749,7 +829,6 @@
 
     if (fwd === 0 || aft === 0) { alert("Vul eerst scheepsgegevens in."); return; }
 
-    // De algemene vinkjes-controles blijven verborgen op PDF
     let html = '<div class="section-title print-hide">Controles & Limieten</div><div class="result-grid print-hide">';
     html += (pb >= 50) ? `<div class="result-item result-ok">✓ PB (${pb}m)</div>` : `<div class="result-item result-error">✕ PB < 50m</div>`;
     html += (loa >= 100 && loa <= 280) ? `<div class="result-item result-ok">✓ LOA (${loa}m)</div>` : `<div class="result-item result-error">✕ LOA Fout</div>`;
@@ -762,7 +841,6 @@
     const armConfig = Object.keys(armConfigMap).map(key => ({ id: key, ...armConfigMap[key] }));
     let userOff = parseFloat(document.getElementById('manualOffset').value) || 0;
 
-    // De arm calculatie staat WEL op de PDF afgedrukt
     const renderArms = (mooringSide) => { 
         let output = `<div class="arm-container"><div class="arm-header">Berthing ${mooringSide}</div><div class="arm-row">`; 
         armConfig.forEach(arm => { 
@@ -778,7 +856,6 @@
                 const moveAft = (fwd - effReqFwd).toFixed(1); 
                 output += `<div class="arm-block result-ok"><div class="arm-title">${arm.name}</div><div class="offset-info"><div class="offset-line"><span>Fwd:</span><span class="offset-val">+${moveFwd}</span></div><div class="offset-line"><span>Aft:</span><span class="offset-val">+${moveAft}</span></div></div></div>`; 
             } else { 
-                // AANGEPAST NAAR HET ENGELS:
                 output += `<div class="arm-block result-error"><div class="arm-title">${arm.name}</div><div>Won't fit</div></div>`; 
             } 
         }); 
@@ -789,7 +866,6 @@
     html += renderArms('Portside (PS)'); 
     html += renderArms('Starboard (SB)');
 
-    // TUGS EN TEKSTEN NU ZICHTBAAR OP PDF 
     let reqTugs = (loa < 125) ? [35,35] : (loa < 150) ? [50,40] : (loa < 220) ? [60,50,50] : [60,60,60,60];
     html += '<div class="section-title">Tug Requirements</div><div class="tug-section"><div class="tug-row">';
     reqTugs.forEach(t => { html += `<div class="tug-item">${getTugSVG(t)}<div class="tug-caption">BP</div></div>`; });
@@ -867,7 +943,6 @@
           return;
       }
 
-      // 1. Zorg dat alles berekend/getekend is
       checkAfmeren();
       
       const fwd = parseFloat(document.getElementById('fwd').value) || 0; 
@@ -882,20 +957,16 @@
       const dateEl = document.getElementById('pf-date');
       if (dateEl) { dateEl.innerText = new Date().toLocaleDateString('nl-NL'); }
 
-      // 2. Naam genereren voor de browser z'n PDF opslag-dialoog
       let safeShipName = shipNameVal.trim().replace(/[^a-zA-Z0-9\s-]/g, '');
       let safeImo = (document.getElementById('imo').value || "IMO").trim().replace(/[^a-zA-Z0-9\s-]/g, '');
       
       const originalTitle = document.title;
-      // Hier zetten we de titel zodat de browser dit overneemt als bestandsnaam
       document.title = `${safeShipName}-${safeImo}-mooringplan`;
 
-      // 3. Print modus inschakelen en printen
       document.body.setAttribute('data-print-mode', 'report'); 
       
       window.print();
       
-      // 4. Alles na een halve seconde weer netjes terugzetten
       setTimeout(() => { 
           document.body.removeAttribute('data-print-mode'); 
           document.title = originalTitle;
