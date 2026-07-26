@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ShipFit 8.20 - Compact Print Edition</title>
+  <title>ShipFit 8.21 - Auto-Naming PDF</title>
   
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
 
@@ -224,7 +224,7 @@
 
   <header>
     <img src="zrlogo.png" alt="Logo" onerror="this.style.display='none'">
-    <h1>ShipFit 8.19</h1>
+    <h1>ShipFit 8.21</h1>
   </header>
 
   <div class="container">
@@ -861,28 +861,44 @@
 
   function printSmartPDF() {
       const selected = document.querySelector('input[name="selectedArm"]:checked');
-      if (selected) {
-          const fwd = parseFloat(document.getElementById('fwd').value) || 0; 
-          const aft = parseFloat(document.getElementById('aft').value) || 0;
-          const armId = selected.value; const offset = armPositions[armId];
-          drawDualPlots(fwd, aft, offset, armId);
-          
-          const shipNameEl = document.getElementById('pf-shipname');
-          if (shipNameEl) {
-              shipNameEl.innerText = document.getElementById('shipName').value || "";
-          }
-          const dateEl = document.getElementById('pf-date');
-          if (dateEl) {
-              dateEl.innerText = new Date().toLocaleDateString('nl-NL');
-          }
-
-          document.body.setAttribute('data-print-mode', 'report'); 
-      } else {
-          document.body.setAttribute('data-print-mode', 'simple'); 
+      if (!selected) {
+          alert("Selecteer eerst een loadingarm om een meerplan te maken.");
+          return;
       }
+
+      // 1. Zorg dat alles berekend/getekend is
+      checkAfmeren();
+      
+      const fwd = parseFloat(document.getElementById('fwd').value) || 0; 
+      const aft = parseFloat(document.getElementById('aft').value) || 0;
+      const armId = selected.value; const offset = armPositions[armId];
+      drawDualPlots(fwd, aft, offset, armId);
+      
+      const shipNameVal = document.getElementById('shipName').value || "Schip";
+      const shipNameEl = document.getElementById('pf-shipname');
+      if (shipNameEl) { shipNameEl.innerText = shipNameVal; }
+      
+      const dateEl = document.getElementById('pf-date');
+      if (dateEl) { dateEl.innerText = new Date().toLocaleDateString('nl-NL'); }
+
+      // 2. Naam genereren voor de browser z'n PDF opslag-dialoog
+      let safeShipName = shipNameVal.trim().replace(/[^a-zA-Z0-9\s-]/g, '');
+      let safeImo = (document.getElementById('imo').value || "IMO").trim().replace(/[^a-zA-Z0-9\s-]/g, '');
+      
+      const originalTitle = document.title;
+      // Hier zetten we de titel zodat de browser dit overneemt als bestandsnaam
+      document.title = `${safeShipName}-${safeImo}-mooringplan`;
+
+      // 3. Print modus inschakelen en printen
+      document.body.setAttribute('data-print-mode', 'report'); 
       
       window.print();
-      setTimeout(() => { document.body.removeAttribute('data-print-mode'); }, 500);
+      
+      // 4. Alles na een halve seconde weer netjes terugzetten
+      setTimeout(() => { 
+          document.body.removeAttribute('data-print-mode'); 
+          document.title = originalTitle;
+      }, 500);
   }
 </script>
 </body>
