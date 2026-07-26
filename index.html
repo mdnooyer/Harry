@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ShipFit 8.4 - Styled Arm Blocks</title>
+  <title>ShipFit 8.5 - English Terminology</title>
   
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
 
@@ -255,7 +255,7 @@
 
   <header>
     <img src="zrlogo.png" alt="Logo" onerror="this.style.display='none'">
-    <h1>ShipFit 8.4</h1>
+    <h1>ShipFit 8.5</h1>
   </header>
 
   <!-- HET APPLICATIE SCHERM (Wordt geprint als Pagina 1) -->
@@ -298,7 +298,7 @@
 
       <div class="arm-selection-group">
         <div>
-            <label style="display: block; margin-bottom: 5px; font-weight: 600; color: #555;">Selecteer Laadarm voor Meerplan:</label>
+            <label style="display: block; margin-bottom: 5px; font-weight: 600; color: #555;">Selecteer loadingarm voor Meerplan:</label>
             <div class="radio-options">
                 <label class="radio-label"><input type="radio" name="selectedArm" value="4" onchange="triggerUpdate()"> Arm 4</label>
                 <label class="radio-label"><input type="radio" name="selectedArm" value="5" onchange="triggerUpdate()"> Arm 5</label>
@@ -326,7 +326,7 @@
   <!-- Container voor Print Pages -->
   <div id="plot-container" style="display:none;">
     
-    <!-- Plot 1: Stuurboord (Inclusief formulier in print weergave) -->
+    <!-- Plot 1: Starboard (Inclusief formulier in print weergave) -->
     <div id="sb-page" class="print-page">
       <div class="print-landscape-container">
           
@@ -395,17 +395,17 @@
           <div class="canvas-wrapper">
               <canvas id="canvasSB" width="950" height="350"></canvas>
           </div>
-          <div class="plot-label">Stuurboord (SB) Berthing</div>
+          <div class="plot-label">Starboard (SB) Berthing</div>
       </div>
     </div>
 
-    <!-- Plot 2: Bakboord -->
+    <!-- Plot 2: Portside -->
     <div id="ps-page" class="print-page">
       <div class="print-landscape-container ps-center">
           <div class="canvas-wrapper">
               <canvas id="canvasPS" width="950" height="350"></canvas>
           </div>
-          <div class="plot-label">Bakboord (PS) Berthing</div>
+          <div class="plot-label">Portside (PS) Berthing</div>
       </div>
     </div>
 
@@ -722,7 +722,7 @@
         let output = `<div class="arm-container"><div class="arm-header">Berthing ${mooringSide}</div><div class="arm-row">`; 
         armConfig.forEach(arm => { 
             let baseReqFwd, baseReqAft; 
-            if (mooringSide === 'Stuurboord (SB)') { baseReqFwd = arm.reqFwd; baseReqAft = arm.reqAft; } 
+            if (mooringSide === 'Starboard (SB)') { baseReqFwd = arm.reqFwd; baseReqAft = arm.reqAft; } 
             else { baseReqFwd = arm.reqAft; baseReqAft = arm.reqFwd; } 
             
             let effReqFwd = baseReqFwd + userOff;
@@ -739,9 +739,9 @@
         output += '</div></div>'; return output; 
     };
 
-    html += '<div class="section-title">Laadarmen (Check)</div>'; 
-    html += renderArms('Bakboord (PS)'); 
-    html += renderArms('Stuurboord (SB)');
+    html += '<div class="section-title">Loadingarms (Check)</div>'; 
+    html += renderArms('Portside (PS)'); 
+    html += renderArms('Starboard (SB)');
 
     let reqTugs = (loa < 125) ? [35,35] : (loa < 150) ? [50,40] : (loa < 220) ? [60,50,50] : [60,60,60,60];
     html += '<div class="section-title">Tug Requirements</div><div class="tug-section"><div class="tug-row">';
@@ -817,7 +817,7 @@
 
   function maakMeerplan() {
     const selected = document.querySelector('input[name="selectedArm"]:checked');
-    if (!selected) { alert("Selecteer eerst een laadarm."); return; }
+    if (!selected) { alert("Selecteer eerst een loadingarm."); return; }
     
     checkAfmeren();
     document.getElementById('plot-container').scrollIntoView({behavior: 'smooth'});
