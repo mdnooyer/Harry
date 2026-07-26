@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ShipFit 8.15 - Safe Berthing Limits</title>
+  <title>ShipFit 8.16 - Native Landscape Print</title>
   
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
 
@@ -103,10 +103,14 @@
 
     /* === PDF PRINT STYLES === */
     @media print {
-      @page { margin: 10mm; size: A4 portrait; }
+      /* Forceert de PDF browser dialog direct naar liggend / horizontaal */
+      @page { margin: 10mm; size: A4 landscape; }
       
       body, html { width: 100%; height: 100%; margin: 0; padding: 0; background: var(--bg) !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-      .upload-section, .buttons { display: none !important; }
+      
+      /* Verberg knoppen én de specifieke print-hide (Controles & Limieten) elementen */
+      .upload-section, .buttons, .print-hide { display: none !important; }
+      
       .container { margin: 0 !important; padding: 5mm !important; width: 100% !important; max-width: none !important; box-shadow: none !important; border: none !important; page-break-after: always; }
       
       .row-flex { display: flex !important; width: 100% !important; gap: 5px !important; margin-bottom: 2px !important; }
@@ -115,8 +119,6 @@
       .form-group input { border: none !important; background: transparent !important; padding: 0 !important; font-weight: bold; font-size: 11px; color: #000; }
       
       .section-title { margin-top: 5mm; margin-bottom: 2mm; font-size: 12px; border-bottom: 1px solid #ccc; font-weight: bold; color: #000; }
-      .result-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3mm; margin-bottom: 5mm; }
-      .result-item { padding: 4px; font-size: 10px; border-radius: 4px; }
       
       .arm-container { margin-bottom: 5mm; }
       .arm-row { display: flex !important; flex-direction: row !important; gap: 5px !important; width: 100%; }
@@ -138,38 +140,50 @@
       body[data-print-mode="simple"] #plot-container { display: none !important; }
       body[data-print-mode="report"] #plot-container { display: block !important; padding: 0 !important; margin: 0 !important; border: none !important; background: transparent !important; box-shadow: none !important; }
       
-      /* PAGINA 2 & 3: Tekeningen Horizontaal */
-      .print-page { width: 190mm; height: 277mm; position: relative; overflow: hidden; page-break-after: always; page-break-inside: avoid; background: white !important; }
+      /* PAGINA 2 & 3: Tekeningen Horizontaal (Native Landscape zonder de hacky rotatie) */
+      .print-page { 
+          width: 100%; 
+          height: 95vh; 
+          position: relative; 
+          overflow: hidden; 
+          page-break-after: always; 
+          page-break-inside: avoid; 
+          background: white !important; 
+          display: flex; 
+          align-items: center; 
+          justify-content: center; 
+      }
       .print-page:last-child { page-break-after: auto; }
       
       .print-landscape-container {
-          position: absolute !important; 
-          top: 138.5mm !important; left: 95mm !important;
-          width: 277mm !important; height: 190mm !important; 
-          margin-top: -95mm !important; margin-left: -138.5mm !important;
-          transform: rotate(-90deg) !important; 
-          display: flex !important; flex-direction: column !important; justify-content: space-between !important; align-items: center !important;
-          padding: 8mm 15mm !important; box-sizing: border-box !important;
+          width: 100% !important; 
+          display: flex !important; 
+          flex-direction: column !important; 
+          align-items: center !important;
+          padding: 5mm !important; 
+          box-sizing: border-box !important;
       }
 
-      .mooring-form-print { display: flex !important; flex-direction: column !important; align-items: center !important; width: 100% !important; color: #000 !important; font-family: Arial, sans-serif !important; margin: 0 !important; order: 1 !important; }
-      .mf-top-table { border-collapse: collapse; width: 100%; max-width: 450px; font-size: 11px; margin-bottom: 2mm; }
+      .mooring-form-print { display: flex !important; flex-direction: column !important; align-items: center !important; width: 100% !important; color: #000 !important; font-family: Arial, sans-serif !important; margin: 0 0 5mm 0 !important; order: 1 !important; }
+      
+      .mf-top-table { border-collapse: collapse; width: 100%; max-width: 600px; font-size: 11px; margin-bottom: 2mm; }
       .mf-top-table td { border: 1px solid #000; padding: 3px 6px; height: 16px; }
-      .mf-top-table .mf-lbl { background: #eee; width: 100px; font-weight: bold; }
+      .mf-top-table .mf-lbl { background: #eee; width: 120px; font-weight: bold; }
       .mf-top-table .mf-noborder { border: none !important; }
       
       .mooring-form-print h2 { font-size: 14px; margin: 2mm 0; text-align: left; font-weight: bold; color: #000; }
-      .mf-main-table { border-collapse: collapse; width: 100%; border: 1px solid #000; font-size: 10px; }
-      .mf-main-table th, .mf-main-table td { border: 1px solid #000; padding: 4px 6px; text-align: left; }
-      .mf-main-table th { text-align: center; font-weight: bold; font-size: 11px; background: #f9f9f9; }
+      
+      .mf-main-table { border-collapse: collapse; width: 100%; max-width: 900px; border: 1px solid #000; font-size: 11px; }
+      .mf-main-table th, .mf-main-table td { border: 1px solid #000; padding: 5px 8px; text-align: left; }
+      .mf-main-table th { text-align: center; font-weight: bold; font-size: 12px; background: #f9f9f9; }
       .mf-double-line { border-top: 3px double #000 !important; }
+      
       .mooring-form-print p { font-size: 11px; margin-top: 3mm; margin-bottom: 0; text-align: center; display: block; width: 100%; color: #000;}
 
-      .canvas-wrapper { width: 100% !important; flex: 1 1 auto !important; display: flex !important; align-items: center !important; justify-content: center !important; overflow: hidden !important; margin: 2mm 0 !important; order: 2 !important; }
-      .print-landscape-container canvas { max-width: 100% !important; max-height: 100% !important; width: auto !important; height: auto !important; border: none !important; object-fit: contain !important; }
+      .canvas-wrapper { width: 100% !important; display: flex !important; align-items: center !important; justify-content: center !important; margin: 5mm 0 !important; order: 2 !important; }
+      .print-landscape-container canvas { max-width: 100% !important; object-fit: contain !important; border: none !important; }
 
-      .plot-label { width: 100% !important; text-align: left !important; font-size: 16px !important; font-weight: bold !important; color: #000 !important; margin: 0 !important; padding: 0 0 0 5mm !important; order: 3 !important; position: static !important; transform: none !important; }
-      .ps-center { justify-content: center !important; }
+      .plot-label { width: 100% !important; max-width: 900px; text-align: left !important; font-size: 16px !important; font-weight: bold !important; color: #000 !important; margin: 0 auto !important; order: 3 !important; }
     }
   </style>
 </head>
@@ -177,7 +191,7 @@
 
   <header>
     <img src="zrlogo.png" alt="Logo" onerror="this.style.display='none'">
-    <h1>ShipFit 8.15</h1>
+    <h1>ShipFit 8.16</h1>
   </header>
 
   <div class="container">
@@ -654,25 +668,22 @@
 
     // --- OVERLAY: NOT SUITABLE RED CROSS ---
     if (fits === false) {
-        // Semi-transparante overlay
         ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
         ctx.fillRect(0, 0, width, height);
 
-        // Het rode kruis
         ctx.beginPath();
         ctx.moveTo(50, 50);
         ctx.lineTo(width - 50, height - 50);
         ctx.moveTo(width - 50, 50);
         ctx.lineTo(50, height - 50);
-        ctx.strokeStyle = 'rgba(211, 47, 47, 0.7)'; // Donkerrood, 70% opacity
+        ctx.strokeStyle = 'rgba(211, 47, 47, 0.7)'; 
         ctx.lineWidth = 15;
         ctx.stroke();
 
-        // Dynamische Tekst achtergrond box
         const alertText = "NOT SUITABLE ON LOADING ARM NR " + selectedArmId;
         ctx.font = 'bold 36px Arial';
         const textMetrics = ctx.measureText(alertText);
-        const textW = textMetrics.width + 60; // 60px padding voor de breedte
+        const textW = textMetrics.width + 60; 
         const textH = 70;
         
         ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
@@ -682,12 +693,11 @@
         ctx.lineWidth = 3;
         ctx.strokeRect(midX - textW/2, height/2 - textH/2, textW, textH);
 
-        // De waarschuwingstekst
         ctx.fillStyle = '#d32f2f';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(alertText, midX, height / 2);
-        ctx.textBaseline = 'alphabetic'; // Reset textBaseline
+        ctx.textBaseline = 'alphabetic'; 
     }
   }
 
@@ -695,7 +705,6 @@
     const armData = armConfigMap[selectedArmId];
     const userOff = parseFloat(document.getElementById('manualOffset').value) || 0;
     
-    // Bereken of het schip past voor Starboard en Portside
     const fitsSB = fwd > (armData.reqFwd + userOff) && aft > (armData.reqAft - userOff);
     const fitsPS = fwd > (armData.reqAft + userOff) && aft > (armData.reqFwd - userOff);
 
@@ -712,7 +721,8 @@
 
     if (fwd === 0 || aft === 0) { alert("Vul eerst scheepsgegevens in."); return; }
 
-    let html = '<div class="section-title">Controles & Limieten</div><div class="result-grid">';
+    // Deze elementen hebben de 'print-hide' class gekregen zodat ze onzichtbaar zijn op de PDF
+    let html = '<div class="section-title print-hide">Controles & Limieten</div><div class="result-grid print-hide">';
     html += (pb >= 50) ? `<div class="result-item result-ok">✓ PB (${pb}m)</div>` : `<div class="result-item result-error">✕ PB < 50m</div>`;
     html += (loa >= 100 && loa <= 280) ? `<div class="result-item result-ok">✓ LOA (${loa}m)</div>` : `<div class="result-item result-error">✕ LOA Fout</div>`;
     const sumDiff = Math.abs((fwd + aft) - pb); html += (sumDiff <= 1) ? `<div class="result-item result-ok">✓ Verschil tussen AFT+FWD=tot. parallel body</div>` : `<div class="result-item result-error">✕ Verschil tussen AFT+FWD=tot. parallel body</div>`;
