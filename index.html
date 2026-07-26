@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ShipFit 8.16 - Native Landscape Print</title>
+  <title>ShipFit 8.17 - Portrait Print Layout</title>
   
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
 
@@ -93,7 +93,7 @@
             border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border: 1px solid #ccc;
         }
         .print-page { margin-bottom: 40px; position: relative; }
-        .print-landscape-container { display: flex; flex-direction: column; align-items: center; }
+        .print-container { display: flex; flex-direction: column; align-items: center; }
         .mooring-form-print { display: none; } 
         
         .plot-label { order: 1; text-align: center; font-weight: bold; font-size: 1.1rem; margin-bottom: 10px; color: #1565c0; }
@@ -103,8 +103,8 @@
 
     /* === PDF PRINT STYLES === */
     @media print {
-      /* Forceert de PDF browser dialog direct naar liggend / horizontaal */
-      @page { margin: 10mm; size: A4 landscape; }
+      /* Terug naar Portrait mode */
+      @page { margin: 10mm; size: A4 portrait; }
       
       body, html { width: 100%; height: 100%; margin: 0; padding: 0; background: var(--bg) !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
       
@@ -140,50 +140,53 @@
       body[data-print-mode="simple"] #plot-container { display: none !important; }
       body[data-print-mode="report"] #plot-container { display: block !important; padding: 0 !important; margin: 0 !important; border: none !important; background: transparent !important; box-shadow: none !important; }
       
-      /* PAGINA 2 & 3: Tekeningen Horizontaal (Native Landscape zonder de hacky rotatie) */
+      /* PAGINA 2 & 3: Tekeningen Horizontaal geplaatst op een Staande (Portrait) pagina */
       .print-page { 
           width: 100%; 
-          height: 95vh; 
+          height: 100%; 
+          min-height: 250mm;
           position: relative; 
           overflow: hidden; 
           page-break-after: always; 
           page-break-inside: avoid; 
           background: white !important; 
           display: flex; 
+          flex-direction: column;
           align-items: center; 
-          justify-content: center; 
+          justify-content: flex-start; /* Boven uitlijnen op het vel */
+          padding-top: 10mm;
       }
       .print-page:last-child { page-break-after: auto; }
       
-      .print-landscape-container {
+      .print-container {
           width: 100% !important; 
           display: flex !important; 
           flex-direction: column !important; 
           align-items: center !important;
-          padding: 5mm !important; 
           box-sizing: border-box !important;
       }
 
       .mooring-form-print { display: flex !important; flex-direction: column !important; align-items: center !important; width: 100% !important; color: #000 !important; font-family: Arial, sans-serif !important; margin: 0 0 5mm 0 !important; order: 1 !important; }
       
-      .mf-top-table { border-collapse: collapse; width: 100%; max-width: 600px; font-size: 11px; margin-bottom: 2mm; }
+      /* Tabellen schalen zich nu netjes in de breedte van een portret-A4 */
+      .mf-top-table { border-collapse: collapse; width: 100%; max-width: 100%; font-size: 10px; margin-bottom: 2mm; }
       .mf-top-table td { border: 1px solid #000; padding: 3px 6px; height: 16px; }
       .mf-top-table .mf-lbl { background: #eee; width: 120px; font-weight: bold; }
       .mf-top-table .mf-noborder { border: none !important; }
       
       .mooring-form-print h2 { font-size: 14px; margin: 2mm 0; text-align: left; font-weight: bold; color: #000; }
       
-      .mf-main-table { border-collapse: collapse; width: 100%; max-width: 900px; border: 1px solid #000; font-size: 11px; }
-      .mf-main-table th, .mf-main-table td { border: 1px solid #000; padding: 5px 8px; text-align: left; }
-      .mf-main-table th { text-align: center; font-weight: bold; font-size: 12px; background: #f9f9f9; }
+      .mf-main-table { border-collapse: collapse; width: 100%; max-width: 100%; border: 1px solid #000; font-size: 9px; } /* Lettertype iets kleiner voor portrait breedte */
+      .mf-main-table th, .mf-main-table td { border: 1px solid #000; padding: 4px 6px; text-align: left; }
+      .mf-main-table th { text-align: center; font-weight: bold; font-size: 10px; background: #f9f9f9; }
       .mf-double-line { border-top: 3px double #000 !important; }
       
-      .mooring-form-print p { font-size: 11px; margin-top: 3mm; margin-bottom: 0; text-align: center; display: block; width: 100%; color: #000;}
+      .mooring-form-print p { font-size: 10px; margin-top: 3mm; margin-bottom: 0; text-align: center; display: block; width: 100%; color: #000;}
 
       .canvas-wrapper { width: 100% !important; display: flex !important; align-items: center !important; justify-content: center !important; margin: 5mm 0 !important; order: 2 !important; }
-      .print-landscape-container canvas { max-width: 100% !important; object-fit: contain !important; border: none !important; }
+      .print-container canvas { max-width: 100% !important; height: auto !important; object-fit: contain !important; border: none !important; }
 
-      .plot-label { width: 100% !important; max-width: 900px; text-align: left !important; font-size: 16px !important; font-weight: bold !important; color: #000 !important; margin: 0 auto !important; order: 3 !important; }
+      .plot-label { width: 100% !important; max-width: 100%; text-align: left !important; font-size: 14px !important; font-weight: bold !important; color: #000 !important; margin: 0 auto !important; order: 3 !important; }
     }
   </style>
 </head>
@@ -191,7 +194,7 @@
 
   <header>
     <img src="zrlogo.png" alt="Logo" onerror="this.style.display='none'">
-    <h1>ShipFit 8.16</h1>
+    <h1>ShipFit 8.17</h1>
   </header>
 
   <div class="container">
@@ -263,7 +266,7 @@
     
     <!-- Plot 1: Starboard -->
     <div id="sb-page" class="print-page">
-      <div class="print-landscape-container">
+      <div class="print-container">
           
           <div class="mooring-form-print">
               <table class="mf-top-table">
@@ -336,7 +339,7 @@
 
     <!-- Plot 2: Portside -->
     <div id="ps-page" class="print-page">
-      <div class="print-landscape-container ps-center">
+      <div class="print-container ps-center">
           <div class="canvas-wrapper">
               <canvas id="canvasPS" width="950" height="350"></canvas>
           </div>
@@ -735,7 +738,7 @@
     let userOff = parseFloat(document.getElementById('manualOffset').value) || 0;
 
     const renderArms = (mooringSide) => { 
-        let output = `<div class="arm-container"><div class="arm-header">Berthing ${mooringSide}</div><div class="arm-row">`; 
+        let output = `<div class="arm-container print-hide"><div class="arm-header">Berthing ${mooringSide}</div><div class="arm-row">`; 
         armConfig.forEach(arm => { 
             let baseReqFwd, baseReqAft; 
             if (mooringSide === 'Starboard (SB)') { baseReqFwd = arm.reqFwd; baseReqAft = arm.reqAft; } 
@@ -755,16 +758,16 @@
         output += '</div></div>'; return output; 
     };
 
-    html += '<div class="section-title">Loadingarms (Check)</div>'; 
+    html += '<div class="section-title print-hide">Loadingarms (Check)</div>'; 
     html += renderArms('Portside (PS)'); 
     html += renderArms('Starboard (SB)');
 
     let reqTugs = (loa < 125) ? [35,35] : (loa < 150) ? [50,40] : (loa < 220) ? [60,50,50] : [60,60,60,60];
-    html += '<div class="section-title">Tug Requirements</div><div class="tug-section"><div class="tug-row">';
+    html += '<div class="section-title print-hide">Tug Requirements</div><div class="tug-section print-hide"><div class="tug-row">';
     reqTugs.forEach(t => { html += `<div class="tug-item">${getTugSVG(t)}<div class="tug-caption">BP</div></div>`; });
     html += '</div></div>';
 
-    html += `<div class="req-text">
+    html += `<div class="req-text print-hide">
         <p style="font-size: 1rem; color: #1565c0; font-weight: bold; margin-bottom: 5px;">Regulations for Berthing, Remaining Alongside and Unberthing</p>
         <p>The following regulations apply to berthing, remaining alongside and unberthing at the Zeeland Refinery jetties:</p>
         
@@ -798,15 +801,15 @@
         </ul>
     </div>`;
 
-    html += '<div class="section-title">Minimum mooring requirements per berth</div>'; 
+    html += '<div class="section-title print-hide">Minimum mooring requirements per berth</div>'; 
     if(deadweight > 0) { 
         let l, b, s; 
         if(deadweight < 20000) { l = 2; b = 2; s = 2; } 
         else if(deadweight <= 40000) { l = 2; b = 3; s = 2; } 
         else { l = 3; b = 3; s = 2; } 
-        html += `<div class="arm-row"><div class="arm-block mooring-box"><div class="mooring-header">Voorschip FWD</div><div class="mooring-details"><div class="mooring-line"><span>Headlines:</span> <strong>${l}</strong></div><div class="mooring-line"><span>Breast lines:</span> <strong>${b}</strong></div><div class="mooring-line"><span>Springs:</span> <strong>${s}</strong></div></div></div><div class="arm-block mooring-box"><div class="mooring-header">Achterschip (Aft)</div><div class="mooring-details"><div class="mooring-line"><span>Sternlines:</span> <strong>${l}</strong></div><div class="mooring-line"><span>Breast lines:</span> <strong>${b}</strong></div><div class="mooring-line"><span>Springs:</span> <strong>${s}</strong></div></div></div></div><div style="text-align:center; font-size:0.8rem; margin-top:5px; color:#666; margin-bottom: 10px;">Configuratie: ${l} + ${b} + ${s} (Fore & Aft)</div>`; 
+        html += `<div class="arm-row print-hide"><div class="arm-block mooring-box"><div class="mooring-header">Voorschip FWD</div><div class="mooring-details"><div class="mooring-line"><span>Headlines:</span> <strong>${l}</strong></div><div class="mooring-line"><span>Breast lines:</span> <strong>${b}</strong></div><div class="mooring-line"><span>Springs:</span> <strong>${s}</strong></div></div></div><div class="arm-block mooring-box"><div class="mooring-header">Achterschip (Aft)</div><div class="mooring-details"><div class="mooring-line"><span>Sternlines:</span> <strong>${l}</strong></div><div class="mooring-line"><span>Breast lines:</span> <strong>${b}</strong></div><div class="mooring-line"><span>Springs:</span> <strong>${s}</strong></div></div></div></div><div class="print-hide" style="text-align:center; font-size:0.8rem; margin-top:5px; color:#666; margin-bottom: 10px;">Configuratie: ${l} + ${b} + ${s} (Fore & Aft)</div>`; 
         
-        html += `<div class="req-text">
+        html += `<div class="req-text print-hide">
             <p>For berthing a sufficient number of lines have to be used dependent of the size of the vessel. Recommended is:</p>
             <ul>
                 <li><strong>Vessels over 40.000 tons SDWT:</strong> A minimum of 3 lines, 3 breast lines, 2 spring lines fore and aft (3-3-2).</li>
