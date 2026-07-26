@@ -460,61 +460,83 @@
   function parseQ88Text(text) {
     const cleanText = text.replace(/\s+/g, ' '); 
     
+    const findVal = (pattern) => {
+      const regex = new RegExp(pattern + ".*?([\\d\\.,]+)", "i");
+      const match = cleanText.match(regex);
+      if (match) return parseFloat(match[1].replace(/,/g, ''));
+      return null;
+    };
+
     // 1. Ship Name & IMO
-    const nameMatch = cleanText.match(/Vessel[’']?s\s+name.*?\)\s*[:\.]?\s*([A-Z0-9\s\-\.]+?)\s*\((\d{7})\)/i);
-    if (nameMatch) { 
-        document.getElementById('shipName').value = nameMatch[1].trim(); 
-        document.getElementById('imo').value = nameMatch[2]; 
-    } else {
-        const altImo = cleanText.match(/IMO\s*Number\s*[:\.]?\s*(\d{7})/i); 
-        if(altImo) document.getElementById('imo').value = altImo[1];
-    }
+    const nameMatch = cleanText.match(/1\.2\s+Vessel[’']?s\s+name.*?\)\s*[:\.]?\s*([A-Z0-9\s\-\.]+?)\s*\((\d{7})\)/i) 
+                   || cleanText.match(/Vessel[’']?s\s+name.*?\)\s*[:\.]?\s*([A-Z0-9\s\-\.]+?)\s*\((\d{7})\)/i);
+    if (nameMatch) { document.getElementById('shipName').value = nameMatch[1].trim(); document.getElementById('imo').value = nameMatch[2]; } 
+    else { const altImo = cleanText.match(/IMO\s*Number\s*[:\.]?\s*(\d{7})/i); if(altImo) document.getElementById('imo').value = altImo[1]; }
 
-    // 2. LOA (Verbeterd voor Q88 V6)
-    const loaMatch = cleanText.match(/Length\s+overall\s*(?:\(LOA\))?\s*[:\.\-]?\s*(\d{2,3}(?:[.,]\d+)?)/i);
-    if(loaMatch) document.getElementById('loa').value = parseFloat(loaMatch[1].replace(',', '.'));
+    // 1.27 LOA
+    let loa = findVal("1\\.27\\s.*?Length overall") || findVal("Length overall\\s*\\(LOA\\)") || findVal("Length overall");
+    if(loa) document.getElementById('loa').value = loa;
 
-    // 3. Beam
-    const beamMatch = cleanText.match(/Extreme\s+breadth\s*(?:\(Beam\))?\s*[:\.\-]?\s*(\d{2,3}(?:[.,]\d+)?)/i) || cleanText.match(/Beam\s*[:\.\-]?\s*(\d{2,3}(?:[.,]\d+)?)/i);
-    if(beamMatch) document.getElementById('beam').value = parseFloat(beamMatch[1].replace(',', '.'));
+    // 1.29 BEAM
+    let beam = findVal("1\\.29\\s.*?Extreme breadth") || findVal("1\\.29\\s.*?Beam") || findVal("Extreme breadth") || findVal("Beam");
+    if(beam) document.getElementById('beam').value = beam;
 
-    // 4. BCM & SCM
-    const bcmMatch = cleanText.match(/Bow\s+to\s+center\s+manifold\s*\(BCM\)[^\d]*(\d+(?:[.,]\d+)?)[^\d]*(\d+(?:[.,]\d+)?)/i);
-    if (bcmMatch) {
-        document.getElementById('bowToCm').value = parseFloat(bcmMatch[1].replace(',', '.'));
-        document.getElementById('sternToCm').value = parseFloat(bcmMatch[2].replace(',', '.'));
-    }
-
-    // 5. Parallel body (Pakt specifiek de 2e kolom = Normal Ballast)
-    const fwdMatch = cleanText.match(/Forward\s+to\s+mid-?point\s+manifold[^\d]*\d+(?:[.,]\d+)?[^\d]+(\d+(?:[.,]\d+)?)/i);
-    if (fwdMatch) document.getElementById('fwd').value = parseFloat(fwdMatch[1].replace(',', '.'));
-    
-    const aftMatch = cleanText.match(/Aft\s+to\s+mid-?point\s+manifold[^\d]*\d+(?:[.,]\d+)?[^\d]+(\d+(?:[.,]\d+)?)/i);
-    if (aftMatch) document.getElementById('aft').value = parseFloat(aftMatch[1].replace(',', '.'));
-    
-    const pbMatch = cleanText.match(/Parallel\s+body\s+length[^\d]*\d+(?:[.,]\d+)?[^\d]+(\d+(?:[.,]\d+)?)/i);
-    if (pbMatch) document.getElementById('pbTotal').value = parseFloat(pbMatch[1].replace(',', '.'));
-
-    // 6. Manifold Height (Pakt de hoogste waarde van de twee indien aanwezig)
-    const maniMatch = cleanText.match(/Manifold\s+height\s+above\s+the\s+waterline[^\d]*(\d+(?:[.,]\d+)?)[^\d]*(\d+(?:[.,]\d+)?)/i);
-    if (maniMatch) {
-        document.getElementById('manifold').value = Math.max(parseFloat(maniMatch[1].replace(',', '.')), parseFloat(maniMatch[2].replace(',', '.')));
-    } else {
-        const oldMani = cleanText.match(/8\.24(.*?)(?:8\.25|Number\/size)/i);
-        if (oldMani) { 
-            const maniNumbers = oldMani[1].match(/(\d+\.\d+)/g); 
-            if (maniNumbers && maniNumbers.length > 0) document.getElementById('manifold').value = Math.max(...maniNumbers.map(n => parseFloat(n))); 
+    // 1.33 BCM / SCM
+    const section133Match = cleanText.match(/1\.33(.*?)(?:1\.34|Parallel)/i);
+    if (section133Match) {
+        const numbers = section133Match[1].match(/(\d+(?:[.,]\d+)?)/g);
+        if (numbers && numbers.length >= 2) {
+            document.getElementById('bowToCm').value = parseFloat(numbers[0].replace(',', '.'));
+            document.getElementById('sternToCm').value = parseFloat(numbers[1].replace(',', '.'));
         }
     }
 
-    // 7. Summer DWT (Pakt het 3e getal in de Summer rij)
-    const summerMatch = cleanText.match(/Summer[^\d]*[\d\.,]+[^\d]*[\d\.,]+[^\d]*([\d\.,]+)/i);
-    if (summerMatch) document.getElementById('deadweight').value = parseFloat(summerMatch[1].replace(/,/g, ''));
+    // 1.34 FWD, AFT, PB
+    const section134Match = cleanText.match(/1\.34(.*?)(?:1\.35|Tonnages)/i);
+    if (section134Match) {
+        const numbers = section134Match[1].match(/(\d+\.\d+)/g);
+        if (numbers && numbers.length >= 9) {
+            document.getElementById('fwd').value = parseFloat(numbers[1]); 
+            document.getElementById('aft').value = parseFloat(numbers[4]); 
+            document.getElementById('pbTotal').value = parseFloat(numbers[7]); 
+        } else {
+            const fwdMatch = cleanText.match(/Forward\s+to\s+mid-?point\s+manifold[^\d]*\d+(?:[.,]\d+)?[^\d]+(\d+(?:[.,]\d+)?)/i);
+            if (fwdMatch) document.getElementById('fwd').value = parseFloat(fwdMatch[1].replace(',', '.'));
+            const aftMatch = cleanText.match(/Aft\s+to\s+mid-?point\s+manifold[^\d]*\d+(?:[.,]\d+)?[^\d]+(\d+(?:[.,]\d+)?)/i);
+            if (aftMatch) document.getElementById('aft').value = parseFloat(aftMatch[1].replace(',', '.'));
+            const pbMatch = cleanText.match(/Parallel\s+body\s+length[^\d]*\d+(?:[.,]\d+)?[^\d]+(\d+(?:[.,]\d+)?)/i);
+            if (pbMatch) document.getElementById('pbTotal').value = parseFloat(pbMatch[1].replace(',', '.'));
+        }
+    }
 
-    // 8. Freeboard Normal Ballast (Pakt het 2e getal = Freeboard)
-    const fbMatch = cleanText.match(/Normal\s+Ballast\s+Condition[^\d]*[\d\.,]+[^\d]*([\d\.,]+)/i);
-    if (fbMatch) document.getElementById('freeboard').value = parseFloat(fbMatch[1].replace(/,/g, ''));
+    // 8.24 Manifold
+    const section824Match = cleanText.match(/8\.24(.*?)(?:8\.25|Number\/size)/i);
+    if (section824Match) { 
+        const maniNumbers = section824Match[1].match(/(\d+\.\d+)/g); 
+        if (maniNumbers && maniNumbers.length > 0) { 
+            const floats = maniNumbers.map(n => parseFloat(n)); 
+            document.getElementById('manifold').value = Math.max(...floats); 
+        } 
+    }
 
+    // 1.39 SUMMER DWT
+    const summerSection = cleanText.match(/Summer:?(.*?)(?:Winter|Tropical)/i);
+    if (summerSection) {
+        const numbers = summerSection[1].match(/(\d{2,3}(?:,\d{3})*(?:\.\d+)?)/g); 
+        if(numbers) {
+            const bigNums = numbers.map(n => parseFloat(n.replace(/,/g, ''))).filter(n => n > 1000);
+            if(bigNums.length > 0) document.getElementById('deadweight').value = bigNums[0];
+        }
+    }
+    if(!document.getElementById('deadweight').value) {
+        const dwtVal = findVal("1\\.39\\s.*?Summer") || findVal("Summer Dwt");
+        if(dwtVal > 1000) document.getElementById('deadweight').value = dwtVal;
+    }
+
+    // Freeboard Normal Ballast
+    const fbVal = findVal("Normal Ballast Condition");
+    if(fbVal) document.getElementById('freeboard').value = fbVal;
+    
     handleDimChange(); saveData();
   }
 
