@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ShipFit 8.12 - Ultimate Q88 Parser</title>
+  <title>ShipFit 8.13 - Safe Berthing Limits</title>
   
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
 
@@ -177,7 +177,7 @@
 
   <header>
     <img src="zrlogo.png" alt="Logo" onerror="this.style.display='none'">
-    <h1>ShipFit 8.12</h1>
+    <h1>ShipFit 8.13</h1>
   </header>
 
   <div class="container">
@@ -336,6 +336,12 @@
   pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
 
   const armPositions = { '4': 4.15, '5': 6.74, '7': 12.38, '8': 14.97 };
+  const armConfigMap = {
+      '4': { name: 'Arm 4', reqFwd: 28.35, reqAft: 19.68 },
+      '5': { name: 'Arm 5', reqFwd: 30.94, reqAft: 17.09 },
+      '7': { name: 'Arm 7', reqFwd: 36.58, reqAft: 11.45 },
+      '8': { name: 'Arm 8', reqFwd: 39.17, reqAft: 8.86 }
+  };
 
   function initApp() {
     if (sessionStorage.getItem('shipfit_auth') !== 'true') {
@@ -378,14 +384,10 @@
     } catch (error) { console.error(error); alert('Fout bij lezen PDF.'); } finally { document.getElementById('loading').style.display = 'none'; input.value = ''; }
   }
 
-  // --- ULTIMATE Q88 PARSER (V6 & V5 Support) ---
   function parseQ88Text(text) {
-      // Duizendtallen opschonen (13,000.50 -> 13000.50) en alle witregels tot enkele spaties maken.
       let cText = text.replace(/(\d),(\d{3})/g, '$1$2');
       cText = cText.replace(/\s+/g, ' '); 
 
-      // Deze functie neemt een array van Regex patronen, en probeert ze één voor één.
-      // Hij "kijkt" maximaal 600 tekens verder en zeeft daar de relevante getallen uit.
       const extractNumbers = (regexPatterns) => {
           for (let pattern of regexPatterns) {
               try {
@@ -400,7 +402,6 @@
           return [];
       };
 
-      // 1. Scheepsnaam & IMO
       try {
           const nameMatch = cText.match(/(?:1\.2\s+)?Vessel[’']?s\s+name.*?\)\s*[:\.]?\s*([A-Z0-9\s\-\.]+?)\s*\((\d{7})\)/i);
           if (nameMatch) { 
@@ -412,15 +413,12 @@
           }
       } catch(e) {}
 
-      // 2. LOA
       let loa = extractNumbers(["1\\.27\\s*Length", "Length overall \\(LOA\\)", "Length overall", "\\bLOA\\b"]);
       if (loa.length > 0) document.getElementById('loa').value = loa[0];
 
-      // 3. BEAM
       let beam = extractNumbers(["1\\.29\\s*Extreme", "Extreme breadth", "\\bBeam\\b"]);
       if (beam.length > 0) document.getElementById('beam').value = beam[0];
 
-      // 4. BCM / SCM 
       let bcm = extractNumbers(["1\\.33\\s*Bow", "Bow to center manifold", "\\bBCM\\b"]);
       if (bcm.length >= 2) {
           document.getElementById('bowToCm').value = bcm[0];
@@ -431,15 +429,12 @@
           if (scm.length > 0) document.getElementById('sternToCm').value = scm[0];
       }
 
-      // 5. FWD, AFT, PB (Speciale afhandeling voor complexe V6 tabellen)
       let distTable = extractNumbers(["1\\.34\\s*Parallel", "1\\.34"]);
       if (distTable.length >= 9) {
-          // Table Layout gevonden: [FWD_L, FWD_B, FWD_S, AFT_L, AFT_B, AFT_S, PB_L, PB_B, PB_S]
           document.getElementById('fwd').value = distTable[1];
           document.getElementById('aft').value = distTable[4];
           document.getElementById('pbTotal').value = distTable[7];
       } else {
-          // Fallbacks als het geen (of een gemankeerde) tabel is
           let fwd = extractNumbers(["Forward to mid-?point", "Forward to center", "\\bForward\\b"]);
           if (fwd.length >= 3) document.getElementById('fwd').value = fwd[1]; 
           else if (fwd.length > 0) document.getElementById('fwd').value = fwd[0];
@@ -453,21 +448,17 @@
           else if (pb.length > 0) document.getElementById('pbTotal').value = pb[0];
       }
 
-      // 6. MANIFOLD
       let mani = extractNumbers(["Manifold height above", "8\\.24"]);
-      // Manifold maat is vaak tussen de 5 en 25m. Filter opvallende afwijkingen (sectienummers e.d.) weg.
       let validMani = mani.filter(n => n > 5 && n < 30);
       if (validMani.length > 0) document.getElementById('manifold').value = Math.max(...validMani);
 
-      // 7. SUMMER DWT
       let sum = extractNumbers(["Summer:", "Summer Dwt", "Summer", "1\\.39"]);
-      let dwt = sum.find(n => n > 1000); // Deadweight tonnage is altijd groot
+      let dwt = sum.find(n => n > 1000); 
       if (dwt) document.getElementById('deadweight').value = dwt;
 
-      // 8. FREEBOARD
       let fb = extractNumbers(["Normal Ballast Condition", "Normal Ballast"]);
       if (fb.length >= 2) {
-          document.getElementById('freeboard').value = fb[1]; // Draft, Freeboard, Displacement
+          document.getElementById('freeboard').value = fb[1]; 
       } else if (fb.length === 1) {
           document.getElementById('freeboard').value = fb[0];
       }
@@ -497,7 +488,7 @@
   function resetForm() { if(confirm("Weet je zeker dat je alles wilt wissen?")) { clearFieldsSilent(); } }
 
   // --- DRAWING ENGINE ---
-  function drawJettyScene(ctx, fwd, aft, side, manifoldOffset, selectedArmId) {
+  function drawJettyScene(ctx, fwd, aft, side, manifoldOffset, selectedArmId, fits) {
     const width = ctx.canvas.width; const height = ctx.canvas.height;
     ctx.clearRect(0, 0, width, height);
     const midX = width / 2; const scale = 2.4; 
@@ -582,11 +573,10 @@
     // --- SCHIP TEKENEN MET OFFSET ---
     let userOff = parseFloat(document.getElementById('manualOffset').value) || 0;
     
-    // Positieve offset = Manifold is FWD van CM.
     let shiftX = (side === 'SB') ? userOff : -userOff;
     
-    const armX = midX + (manifoldOffset * scale); // Groene lijn (vaste positie op loadingarm)
-    const shipZeroX = armX + (shiftX * scale);    // Rode lijn (CM van het schip)
+    const armX = midX + (manifoldOffset * scale); 
+    const shipZeroX = armX + (shiftX * scale);    
     
     const beamVal = parseFloat(document.getElementById('beam').value) || 32; 
     const bowToCmVal = parseFloat(document.getElementById('bowToCm').value) || (fwd + 20);
@@ -637,13 +627,11 @@
         ctx.closePath(); ctx.fill(); ctx.stroke();
     }
 
-    // 1. Rode Lijn: CM (Schip). Tekst staat BOVEN het schip.
     ctx.beginPath(); ctx.moveTo(shipZeroX, shipTopY); ctx.lineTo(shipZeroX, shipBotY);
     ctx.strokeStyle = '#d32f2f'; ctx.setLineDash([5, 3]); ctx.lineWidth = 2; ctx.stroke(); ctx.setLineDash([]);
     ctx.fillStyle = '#d32f2f'; ctx.font = 'bold 11px Arial'; ctx.textAlign = 'center'; 
     ctx.fillText("CM", shipZeroX, shipTopY - 5); 
 
-    // 2. Groene Lijn: Manifold (Arm). Tekst staat ONDER het schip.
     ctx.beginPath(); ctx.moveTo(armX, shipTopY); ctx.lineTo(armX, shipBotY);
     ctx.strokeStyle = '#00c853'; ctx.setLineDash([5, 3]); ctx.lineWidth = 2; ctx.stroke(); ctx.setLineDash([]);
     ctx.fillStyle = '#00c853'; ctx.font = 'bold 11px Arial'; ctx.textAlign = 'center'; 
@@ -663,11 +651,54 @@
     ctx.beginPath(); ctx.moveTo(20, rulerY); ctx.lineTo(width - 20, rulerY); ctx.strokeStyle = '#333'; ctx.lineWidth = 1; ctx.stroke();
     ctx.beginPath(); ctx.moveTo(midX, rulerY - 5); ctx.lineTo(midX, rulerY + 5); ctx.stroke(); ctx.fillStyle = '#000'; ctx.font = '10px Arial'; ctx.textAlign = 'center'; ctx.fillText("0", midX - 3, rulerY + 15);
     ctx.font = '9px Arial'; for(let m = 10; m <= 190; m += 10) { let px = m * scale; if(midX + px < width - 10) { ctx.beginPath(); ctx.moveTo(midX + px, rulerY - 3); ctx.lineTo(midX + px, rulerY + 3); ctx.stroke(); if(m % 20 === 0) ctx.fillText(m, midX + px - 6, rulerY + 15); } if(midX - px > 10) { ctx.beginPath(); ctx.moveTo(midX - px, rulerY - 3); ctx.lineTo(midX - px, rulerY + 3); ctx.stroke(); if(m % 20 === 0) ctx.fillText("-" + m, midX - px - 10, rulerY + 15); }}
+
+    // --- OVERLAY: NOT SUITABLE RED CROSS ---
+    if (fits === false) {
+        // Semi-transparante overlay
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+        ctx.fillRect(0, 0, width, height);
+
+        // Het rode kruis
+        ctx.beginPath();
+        ctx.moveTo(50, 50);
+        ctx.lineTo(width - 50, height - 50);
+        ctx.moveTo(width - 50, 50);
+        ctx.lineTo(50, height - 50);
+        ctx.strokeStyle = 'rgba(211, 47, 47, 0.7)'; // Donkerrood, 70% opacity
+        ctx.lineWidth = 15;
+        ctx.stroke();
+
+        // Tekst achtergrond box
+        const textW = 340;
+        const textH = 70;
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+        ctx.fillRect(midX - textW/2, height/2 - textH/2, textW, textH);
+        
+        ctx.strokeStyle = '#d32f2f';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(midX - textW/2, height/2 - textH/2, textW, textH);
+
+        // "NOT SUITABLE" Tekst
+        ctx.fillStyle = '#d32f2f';
+        ctx.font = 'bold 36px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText("NOT SUITABLE", midX, height / 2);
+        ctx.textBaseline = 'alphabetic'; // Reset voor de zekerheid
+    }
   }
 
   function drawDualPlots(fwd, aft, offset, selectedArmId) {
-    drawJettyScene(document.getElementById('canvasSB').getContext('2d'), fwd, aft, 'SB', offset, selectedArmId); 
-    drawJettyScene(document.getElementById('canvasPS').getContext('2d'), fwd, aft, 'PS', offset, selectedArmId); 
+    const armData = armConfigMap[selectedArmId];
+    const userOff = parseFloat(document.getElementById('manualOffset').value) || 0;
+    
+    // Bereken of het schip past voor Starboard en Portside
+    const fitsSB = fwd > (armData.reqFwd + userOff) && aft > (armData.reqAft - userOff);
+    const fitsPS = fwd > (armData.reqAft + userOff) && aft > (armData.reqFwd - userOff);
+
+    drawJettyScene(document.getElementById('canvasSB').getContext('2d'), fwd, aft, 'SB', offset, selectedArmId, fitsSB); 
+    drawJettyScene(document.getElementById('canvasPS').getContext('2d'), fwd, aft, 'PS', offset, selectedArmId, fitsPS); 
+    
     document.getElementById('plot-container').style.display = 'block';
   }
 
@@ -687,7 +718,7 @@
     html += (deadweight <= 130000) ? `<div class="result-item result-ok">✓ DWT</div>` : `<div class="result-item result-error">✕ DWT > 130kt</div>`;
     html += '</div>';
 
-    const armConfig = [{ name: 'Arm 4', reqFwd: 28.35, reqAft: 19.68 }, { name: 'Arm 5', reqFwd: 30.94, reqAft: 17.09 }, { name: 'Arm 7', reqFwd: 36.58, reqAft: 11.45 }, { name: 'Arm 8', reqFwd: 39.17, reqAft: 8.86 }];
+    const armConfig = Object.keys(armConfigMap).map(key => ({ id: key, ...armConfigMap[key] }));
     let userOff = parseFloat(document.getElementById('manualOffset').value) || 0;
 
     const renderArms = (mooringSide) => { 
