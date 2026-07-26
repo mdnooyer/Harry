@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ShipFit 8.14 - Safe Berthing Limits</title>
+  <title>ShipFit 8.15 - Safe Berthing Limits</title>
   
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
 
@@ -177,7 +177,7 @@
 
   <header>
     <img src="zrlogo.png" alt="Logo" onerror="this.style.display='none'">
-    <h1>ShipFit 8.14</h1>
+    <h1>ShipFit 8.15</h1>
   </header>
 
   <div class="container">
@@ -755,13 +755,37 @@
     html += '</div></div>';
 
     html += `<div class="req-text">
-        <p>For mooring, being moored and unmooring following regulations apply:</p>
-        <ol>
-            <li>Berthing or unberthing should be avoided from 2 hours before HW and HW and is not allowed from 1 hour before HW and HW.<br>HW = High Water at Vlissingen (Flushing)</li>
-            <li>Berthing and unberthing is restricted with current from astern. In certain compelling circumstances and only after consultation and mutual agreement between captain, Pilots and Zeeland Refinery deviation of this rule is allowed.</li>
-            <li>Number of tugboats is dependent on L.O.A. and Summer Deadweight (acc. to Lloyd’s Index).</li>
-        </ol>
-        <p>All tugs used should be deployed as effectively as possible to keep the vessel in position alongside the jetty during berthing. Tugboats are not to be dismissed before all mooring lines are made fast and tightened, and the linesmen have returned to the jetty platform.</p>
+        <p style="font-size: 1rem; color: #1565c0; font-weight: bold; margin-bottom: 5px;">Regulations for Berthing, Remaining Alongside and Unberthing</p>
+        <p>The following regulations apply to berthing, remaining alongside and unberthing at the Zeeland Refinery jetties:</p>
+        
+        <p><strong>High Water Restriction</strong><br>
+        Berthing and unberthing are prohibited from 2 hours before High Water (HW) until High Water (HW).<br>
+        HW refers to High Water at Vlissingen (Flushing).</p>
+        
+        <p><strong>Current Restrictions</strong><br>
+        Berthing and unberthing are not permitted when the tidal current is from astern.<br>
+        A deviation from this rule is only permitted in exceptional and compelling circumstances, following consultation and mutual agreement between:</p>
+        <ul>
+            <li>the Master;</li>
+            <li>the Pilot(s); and</li>
+            <li>Zeeland Refinery.</li>
+        </ul>
+        
+        <p><strong>Tug Requirements</strong><br>
+        The required number of tugboats depends on:</p>
+        <ul>
+            <li>the vessel's Length Overall (LOA); and</li>
+            <li>the vessel's Summer Deadweight (Summer DWT);</li>
+        </ul>
+        <p>in accordance with the Lloyd's Index.</p>
+        
+        <p><strong>Use of Tugboats During Berthing</strong><br>
+        Tugboats shall be used as effectively as possible to keep the vessel in position alongside the jetty throughout the berthing operation.<br>
+        Tugboats shall not be released until:</p>
+        <ul>
+            <li>all mooring lines have been made fast and properly tensioned; and</li>
+            <li>the mooring gang (linesmen) has safely returned to the jetty platform.</li>
+        </ul>
     </div>`;
 
     html += '<div class="section-title">Minimum mooring requirements per berth</div>'; 
