@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ShipFit 8.9 - Bulletproof Q88 V6 Parser</title>
+  <title>ShipFit 8.10 - Bulletproof Q88 Parser</title>
   
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
 
@@ -155,7 +155,7 @@
       body[data-print-mode="simple"] #plot-container { display: none !important; }
       body[data-print-mode="report"] #plot-container { display: block !important; padding: 0 !important; margin: 0 !important; border: none !important; background: transparent !important; box-shadow: none !important; }
       
-      /* PAGINA 2 & 3: Deze pagina's moeten wit zijn voor de tekeningen */
+      /* PAGINA 2 & 3: Tekeningen Horizontaal */
       .print-page { 
           width: 190mm; 
           height: 277mm; 
@@ -167,7 +167,7 @@
       }
       .print-page:last-child { page-break-after: auto; }
       
-      /* HET ROTATIEVAK: Roteert 90 graden rechtsom! (-90deg draait linksom, dus we doen -90 zodat de top linksboven is) */
+      /* Roteert 90 graden rechtsom */
       .print-landscape-container {
           position: absolute !important; 
           top: 138.5mm !important; 
@@ -186,7 +186,6 @@
           box-sizing: border-box !important;
       }
 
-      /* 1. HET FORMULIER (Bovenaan het Landscape vlak) */
       .mooring-form-print { 
           display: flex !important; 
           flex-direction: column !important;
@@ -212,7 +211,6 @@
       
       .mooring-form-print p { font-size: 11px; margin-top: 3mm; margin-bottom: 0; text-align: center; display: block; width: 100%; color: #000;}
 
-      /* 2. DE TEKENING (In het midden) */
       .canvas-wrapper { 
           width: 100% !important; 
           flex: 1 1 auto !important; 
@@ -233,7 +231,6 @@
           object-fit: contain !important; 
       }
 
-      /* 3. DE TITEL (Strak onderaan, uitgelijnd naar links) */
       .plot-label {
           width: 100% !important; 
           text-align: left !important; 
@@ -255,10 +252,9 @@
 
   <header>
     <img src="zrlogo.png" alt="Logo" onerror="this.style.display='none'">
-    <h1>ShipFit 8.9</h1>
+    <h1>ShipFit 8.10</h1>
   </header>
 
-  <!-- HET APPLICATIE SCHERM -->
   <div class="container">
     
     <div class="upload-section">
@@ -457,91 +453,114 @@
     } catch (error) { console.error(error); alert('Fout bij lezen PDF.'); } finally { document.getElementById('loading').style.display = 'none'; input.value = ''; }
   }
 
-  // --- FAULT TOLERANT Q88 PARSER (V6 & V5 Support) ---
+  // --- KOGELVRIJE Q88 PARSER (V6 & V5 Support) ---
   function parseQ88Text(text) {
-      const cleanText = text.replace(/\s+/g, ' '); 
+      // 1. Maak de tekst schoon. Verwijder duizendtallen komma's om getallen goed te herkennen
+      // 50,295.40 wordt 50295.40
+      let cText = text.replace(/(\d),(\d{3})/g, '$1$2');
+      cText = cText.replace(/\s+/g, ' '); 
 
-      // Functie 1: Zoek naar reeks getallen direct volgend op een regex trefwoord.
-      const getNums = (regexStr) => {
+      // Functie: Zoek trefwoord, pak stuk tekst erna en haal ALLE getallen eruit
+      const getNumsAfter = (keyword) => {
           try {
-              const regex = new RegExp(regexStr, "i");
-              const match = cleanText.match(regex);
+              const regex = new RegExp(keyword + "\\s*[:\\-]?\\s*(.{0,200})", "i");
+              const match = cText.match(regex);
               if (match && match[1]) {
-                  // Filter alle getallen (inclusief kommas en punten) in het gevonden tekstblok
-                  const numStrs = match[1].match(/\b(\d{1,3}(?:[,.]\d{3})*(?:[,.]\d+)?)\b/g);
+                  // Vind alle mogelijke getallen met of zonder decimalen
+                  const numStrs = match[1].match(/\b\d+(?:\.\d+)?\b/g);
                   if (numStrs) {
-                      return numStrs.map(n => parseFloat(n.replace(/,/g, '')));
+                      return numStrs.map(n => parseFloat(n));
                   }
               }
-          } catch(e) { console.error("Regex fout:", e); }
+          } catch(e) {}
           return [];
       };
 
       // 1. Scheepsnaam & IMO
       try {
-          const nameMatch = cleanText.match(/Vessel[’']?s\s+name.*?\)\s*[:\.]?\s*([A-Z0-9\s\-\.]+?)\s*\((\d{7})\)/i);
+          const nameMatch = cText.match(/Vessel[’']?s\s+name.*?\)\s*[:\.]?\s*([A-Z0-9\s\-\.]+?)\s*\((\d{7})\)/i);
           if (nameMatch) { 
               document.getElementById('shipName').value = nameMatch[1].trim(); 
               document.getElementById('imo').value = nameMatch[2]; 
           } else {
-              const altImo = cleanText.match(/IMO\s*Number\s*[:\.]?\s*(\d{7})/i); 
+              const altImo = cText.match(/IMO\s*Number\s*[:\.]?\s*(\d{7})/i); 
               if(altImo) document.getElementById('imo').value = altImo[1];
           }
       } catch(e) {}
 
       // 2. LOA
-      let loa = getNums("Length\\s+overall.*?\\s*[:\\-]?\\s*(.{0,50})");
+      let loa = getNumsAfter("Length overall\\s*\\(LOA\\)");
+      if (loa.length === 0) loa = getNumsAfter("Length overall");
       if (loa.length > 0) document.getElementById('loa').value = loa[0];
 
       // 3. BEAM
-      let beam = getNums("Extreme\\s+breadth.*?\\s*[:\\-]?\\s*(.{0,50})");
-      if (beam.length === 0) beam = getNums("Beam.*?\\s*[:\\-]?\\s*(.{0,50})");
+      let beam = getNumsAfter("Extreme breadth\\s*\\(Beam\\)");
+      if (beam.length === 0) beam = getNumsAfter("Extreme breadth");
+      if (beam.length === 0) beam = getNumsAfter("Beam");
       if (beam.length > 0) document.getElementById('beam').value = beam[0];
 
-      // 4. BCM / SCM (V6 Format met beide op 1 regel)
-      let bcmScm = getNums("Bow\\s+to\\s+center\\s+manifold.*?Stern\\s+to\\s+center\\s+manifold.*?\\s*[:\\-]?\\s*(.{0,80})");
+      // 4. BCM / SCM 
+      // V6 plaatst BCM en SCM op 1 regel achter elkaar
+      let bcmScm = getNumsAfter("Bow to center manifold.*?Stern to center manifold.*?");
       if (bcmScm.length >= 2) {
           document.getElementById('bowToCm').value = bcmScm[0];
           document.getElementById('sternToCm').value = bcmScm[1];
       } else {
-          // Fallback voor V5
-          let bcm = getNums("Bow\\s+to\\s+center\\s+manifold.*?\\s*[:\\-]?\\s*(.{0,50})");
-          if(bcm.length > 0) document.getElementById('bowToCm').value = bcm[0];
-          let scm = getNums("Stern\\s+to\\s+center\\s+manifold.*?\\s*[:\\-]?\\s*(.{0,50})");
-          if(scm.length > 0) document.getElementById('sternToCm').value = scm[0];
+          // V5 of oudere formaten
+          let bcm = getNumsAfter("Bow to center manifold");
+          if (bcm.length > 0) document.getElementById('bowToCm').value = bcm[0];
+          let scm = getNumsAfter("Stern to center manifold");
+          if (scm.length > 0) document.getElementById('sternToCm').value = scm[0];
       }
 
-      // 5. FWD, AFT, PB (In V6 is dit een tabel met 3 waarden: Lightship, Ballast, Summer. We moeten index 1 hebben)
-      let fwd = getNums("Forward\\s+to\\s+mid-?point\\s+manifold.*?\\s*[:\\-]?\\s*(.{0,100})");
-      if (fwd.length >= 3) document.getElementById('fwd').value = fwd[1]; // V6
-      else if (fwd.length > 0) document.getElementById('fwd').value = fwd[0]; // V5
+      // 5. FWD & AFT
+      // V6 gooit Lightship, Ballast en Summer door elkaar: FWD en AFT worden in 1 zin geplakt!
+      let fwdAft = getNumsAfter("Forward to mid-point manifold.*?Aft to mid-point manifold");
+      if (fwdAft.length >= 6) { 
+          // Resultaat = [FWD L, FWD B, FWD S, AFT L, AFT B, AFT S]. B = Ballast
+          document.getElementById('fwd').value = fwdAft[1];
+          document.getElementById('aft').value = fwdAft[4];
+      } else {
+          // Oudere formaten
+          let fwd = getNumsAfter("Forward to mid-point manifold");
+          if (fwd.length >= 3) document.getElementById('fwd').value = fwd[1];
+          else if (fwd.length > 0) document.getElementById('fwd').value = fwd[0];
 
-      let aft = getNums("Aft\\s+to\\s+mid-?point\\s+manifold.*?\\s*[:\\-]?\\s*(.{0,100})");
-      if (aft.length >= 3) document.getElementById('aft').value = aft[1];
-      else if (aft.length > 0) document.getElementById('aft').value = aft[0];
+          let aft = getNumsAfter("Aft to mid-point manifold");
+          if (aft.length >= 3) document.getElementById('aft').value = aft[1];
+          else if (aft.length > 0) document.getElementById('aft').value = aft[0];
+      }
 
-      let pb = getNums("Parallel\\s+body\\s+length.*?\\s*[:\\-]?\\s*(.{0,100})");
-      if (pb.length >= 3) document.getElementById('pbTotal').value = pb[1];
-      else if (pb.length > 0) document.getElementById('pbTotal').value = pb[0];
+      // 6. Parallel body (PB)
+      // V6 Plakt dit achteraan. "Parallel body length: 76.65 103.58". (De Lightship stond er ervóór)
+      let pb = getNumsAfter("Parallel body length");
+      if (pb.length >= 2) {
+          document.getElementById('pbTotal').value = pb[0]; // Is de Normal Ballast!
+      } else if (pb.length === 1) {
+          document.getElementById('pbTotal').value = pb[0];
+      }
 
-      // 6. MANIFOLD
-      let mani = getNums("Manifold\\s+height\\s+above.*?\\s*[:\\-]?\\s*(.{0,80})");
-      if (mani.length === 0) mani = getNums("8\\.24.*?\\s*[:\\-]?\\s*(.{0,80})");
+      // 7. MANIFOLD
+      let mani = getNumsAfter("Manifold height above");
+      if (mani.length === 0) mani = getNumsAfter("8\\.24");
       if (mani.length > 0) {
-          // Manifold sectie heeft soms ook tekst over kleppen (zoals 8.25), dus filter vreemde grote nummers
-          let validMani = mani.filter(n => n < 30); 
+          // Filter paragraaf nummers zoals 8.25 eruit (manifold is altijd < 30m)
+          let validMani = mani.filter(n => n < 30);
           if(validMani.length > 0) document.getElementById('manifold').value = Math.max(...validMani);
       }
 
-      // 7. SUMMER DWT (Zoekt het getal dat groter is dan 1000)
-      let sum = getNums("Summer:?\\s*(.{0,100})");
-      if (sum.length === 0) sum = getNums("Summer\\s+Dwt:?\\s*(.{0,100})");
-      let dwt = sum.find(n => n > 1000);
+      // 8. SUMMER DWT (Zoekt de kolom met de gigantische getallen op de Summer regel)
+      let sum = getNumsAfter("Summer:");
+      if (sum.length === 0) sum = getNumsAfter("Summer Dwt");
+      if (sum.length === 0) sum = getNumsAfter("Summer");
+      let dwt = sum.find(n => n > 1000); // Deadweight is altijd in de tienduizenden
       if (dwt) document.getElementById('deadweight').value = dwt;
 
-      // 8. FREEBOARD (In V6 is dit een tabel: Draft, Freeboard, Displacement, Deadweight. Index 1 = Freeboard)
-      let fb = getNums("Normal\\s+Ballast\\s+Condition:?\\s*(.{0,100})");
+      // 9. FREEBOARD
+      // V6: "Normal Ballast Condition: Draft Freeboard Displacement Deadweight"
+      let fb = getNumsAfter("Normal Ballast Condition");
       if (fb.length >= 2) {
+          // Index 1 is de 2e kolom (Freeboard)
           document.getElementById('freeboard').value = fb[1]; 
       } else if (fb.length === 1) {
           document.getElementById('freeboard').value = fb[0];
