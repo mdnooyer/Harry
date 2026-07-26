@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ShipFit 8.6 - Advanced Q88 V6 Parser</title>
+  <title>ShipFit 8.7 - Q88 V6 Parser & Layout</title>
   
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
 
@@ -255,7 +255,7 @@
 
   <header>
     <img src="zrlogo.png" alt="Logo" onerror="this.style.display='none'">
-    <h1>ShipFit 8.6</h1>
+    <h1>ShipFit 8.7</h1>
   </header>
 
   <!-- HET APPLICATIE SCHERM (Wordt geprint als Pagina 1) -->
@@ -457,85 +457,82 @@
     } catch (error) { console.error(error); alert('Fout bij lezen PDF.'); } finally { document.getElementById('loading').style.display = 'none'; input.value = ''; }
   }
 
+  // GEAVANCEERDE Q88 PARSER (Ondersteunt nu ook de complexe kolommen van Q88 V6)
   function parseQ88Text(text) {
     const cleanText = text.replace(/\s+/g, ' '); 
     
-    const findVal = (pattern) => {
-      const regex = new RegExp(pattern + ".*?([\\d\\.,]+)", "i");
-      const match = cleanText.match(regex);
-      if (match) return parseFloat(match[1].replace(/,/g, ''));
-      return null;
-    };
+    // Reguliere expressie voor getallen (vangt zowel 182.55 als 50,295.40 op)
+    const numReg = "(\\d{1,3}(?:[,.]\\d{3})*(?:[,.]\\d+)?)"; 
+    const parseNum = (str) => parseFloat(str.replace(/,/g, '')) || 0;
 
     // 1. Ship Name & IMO
-    const nameMatch = cleanText.match(/1\.2\s+Vessel[’']?s\s+name.*?\)\s*[:\.]?\s*([A-Z0-9\s\-\.]+?)\s*\((\d{7})\)/i) 
-                   || cleanText.match(/Vessel[’']?s\s+name.*?\)\s*[:\.]?\s*([A-Z0-9\s\-\.]+?)\s*\((\d{7})\)/i);
-    if (nameMatch) { document.getElementById('shipName').value = nameMatch[1].trim(); document.getElementById('imo').value = nameMatch[2]; } 
-    else { const altImo = cleanText.match(/IMO\s*Number\s*[:\.]?\s*(\d{7})/i); if(altImo) document.getElementById('imo').value = altImo[1]; }
+    const nameMatch = cleanText.match(/(?:1\.2\s+)?Vessel[’']?s\s+name.*?\)\s*[:\.]?\s*([A-Z0-9\s\-\.]+?)\s*\((\d{7})\)/i);
+    if (nameMatch) { 
+        document.getElementById('shipName').value = nameMatch[1].trim(); 
+        document.getElementById('imo').value = nameMatch[2]; 
+    } else {
+        const altImo = cleanText.match(/IMO\s*Number\s*[:\.]?\s*(\d{7})/i); 
+        if(altImo) document.getElementById('imo').value = altImo[1];
+    }
 
-    // 1.27 LOA
-    let loa = findVal("1\\.27\\s.*?Length overall") || findVal("Length overall\\s*\\(LOA\\)") || findVal("Length overall");
-    if(loa) document.getElementById('loa').value = loa;
+    // 1.27 LOA (Vangt nu veilig '182.55' na het negeren van '(LOA):')
+    const loaMatch = cleanText.match(new RegExp(`Length\\s+overall[^\\d]*${numReg}`, "i"));
+    if(loaMatch) document.getElementById('loa').value = parseNum(loaMatch[1]);
 
     // 1.29 BEAM
-    let beam = findVal("1\\.29\\s.*?Extreme breadth") || findVal("1\\.29\\s.*?Beam") || findVal("Extreme breadth") || findVal("Beam");
-    if(beam) document.getElementById('beam').value = beam;
+    const beamMatch = cleanText.match(new RegExp(`Extreme\\s+breadth[^\\d]*${numReg}`, "i")) || cleanText.match(new RegExp(`Beam[^\\d]*${numReg}`, "i"));
+    if(beamMatch) document.getElementById('beam').value = parseNum(beamMatch[1]);
 
-    // 1.33 BCM / SCM
-    const section133Match = cleanText.match(/1\.33(.*?)(?:1\.34|Parallel)/i);
-    if (section133Match) {
-        const numbers = section133Match[1].match(/(\d+(?:[.,]\d+)?)/g);
-        if (numbers && numbers.length >= 2) {
-            document.getElementById('bowToCm').value = parseFloat(numbers[0].replace(',', '.'));
-            document.getElementById('sternToCm').value = parseFloat(numbers[1].replace(',', '.'));
-        }
+    // 1.33 BCM / SCM (Leest veilig de twee losse getallen na de label)
+    const bcmMatch = cleanText.match(new RegExp(`Bow\\s+to\\s+center\\s+manifold[^\\d]*${numReg}[^\\d]*${numReg}`, "i"));
+    if (bcmMatch) {
+        document.getElementById('bowToCm').value = parseNum(bcmMatch[1]);
+        document.getElementById('sternToCm').value = parseNum(bcmMatch[2]);
     }
 
-    // 1.34 FWD, AFT, PB
-    const section134Match = cleanText.match(/1\.34(.*?)(?:1\.35|Tonnages)/i);
-    if (section134Match) {
-        const numbers = section134Match[1].match(/(\d+\.\d+)/g);
-        if (numbers && numbers.length >= 9) {
-            document.getElementById('fwd').value = parseFloat(numbers[1]); 
-            document.getElementById('aft').value = parseFloat(numbers[4]); 
-            document.getElementById('pbTotal').value = parseFloat(numbers[7]); 
-        } else {
-            const fwdMatch = cleanText.match(/Forward\s+to\s+mid-?point\s+manifold[^\d]*\d+(?:[.,]\d+)?[^\d]+(\d+(?:[.,]\d+)?)/i);
-            if (fwdMatch) document.getElementById('fwd').value = parseFloat(fwdMatch[1].replace(',', '.'));
-            const aftMatch = cleanText.match(/Aft\s+to\s+mid-?point\s+manifold[^\d]*\d+(?:[.,]\d+)?[^\d]+(\d+(?:[.,]\d+)?)/i);
-            if (aftMatch) document.getElementById('aft').value = parseFloat(aftMatch[1].replace(',', '.'));
-            const pbMatch = cleanText.match(/Parallel\s+body\s+length[^\d]*\d+(?:[.,]\d+)?[^\d]+(\d+(?:[.,]\d+)?)/i);
-            if (pbMatch) document.getElementById('pbTotal').value = parseFloat(pbMatch[1].replace(',', '.'));
+    // 1.34 FWD, AFT, PB (Speciaal voor V6: zoekt naar meerdere getallen in kolommen)
+    function getTableValues(label) {
+        let regex = new RegExp(label + `[^\\d]*${numReg}(?:[^\\d]*${numReg})?(?:[^\\d]*${numReg})?`, "i");
+        let match = cleanText.match(regex);
+        if (match) {
+            if (match[3]) return parseNum(match[2]); // V6 formaat (Lightship, Normal Ballast, Summer DWT). Wij willen Normal Ballast (de 2e)
+            if (match[1]) return parseNum(match[1]); // Oud of enkelvoudig formaat
         }
+        return null;
     }
+    
+    let fwdVal = getTableValues("Forward\\s+to\\s+mid-?point\\s+manifold");
+    if (fwdVal) document.getElementById('fwd').value = fwdVal;
+    
+    let aftVal = getTableValues("Aft\\s+to\\s+mid-?point\\s+manifold");
+    if (aftVal) document.getElementById('aft').value = aftVal;
+    
+    let pbVal = getTableValues("Parallel\\s+body\\s+length");
+    if (pbVal) document.getElementById('pbTotal').value = pbVal;
 
     // 8.24 Manifold
-    const section824Match = cleanText.match(/8\.24(.*?)(?:8\.25|Number\/size)/i);
-    if (section824Match) { 
-        const maniNumbers = section824Match[1].match(/(\d+\.\d+)/g); 
-        if (maniNumbers && maniNumbers.length > 0) { 
-            const floats = maniNumbers.map(n => parseFloat(n)); 
-            document.getElementById('manifold').value = Math.max(...floats); 
-        } 
+    const maniMatch = cleanText.match(new RegExp(`Manifold\\s+height\\s+above[^\\d]*${numReg}(?:[^\\d]*${numReg})?`, "i")) || cleanText.match(new RegExp(`8\\.24[^\\d]*${numReg}(?:[^\\d]*${numReg})?`, "i"));
+    if (maniMatch) {
+        let m1 = parseNum(maniMatch[1]);
+        let m2 = maniMatch[2] ? parseNum(maniMatch[2]) : 0;
+        document.getElementById('manifold').value = Math.max(m1, m2);
     }
 
-    // 1.39 SUMMER DWT
-    const summerSection = cleanText.match(/Summer:?(.*?)(?:Winter|Tropical)/i);
-    if (summerSection) {
-        const numbers = summerSection[1].match(/(\d{2,3}(?:,\d{3})*(?:\.\d+)?)/g); 
-        if(numbers) {
-            const bigNums = numbers.map(n => parseFloat(n.replace(/,/g, ''))).filter(n => n > 1000);
-            if(bigNums.length > 0) document.getElementById('deadweight').value = bigNums[0];
-        }
-    }
-    if(!document.getElementById('deadweight').value) {
-        const dwtVal = findVal("1\\.39\\s.*?Summer") || findVal("Summer Dwt");
-        if(dwtVal > 1000) document.getElementById('deadweight').value = dwtVal;
+    // 1.39 SUMMER DWT (In V6 is dit het 3e getal in de 'Summer:' rij)
+    const summerMatch = cleanText.match(new RegExp(`Summer:?[^\\d]*${numReg}[^\\d]*${numReg}[^\\d]*${numReg}`, "i"));
+    if (summerMatch && summerMatch[3]) {
+        document.getElementById('deadweight').value = parseNum(summerMatch[3]);
+    } else {
+        // Fallback voor oudere PDF's
+        const altDwt = cleanText.match(new RegExp(`Summer\\s+Dwt[^\\d]*${numReg}`, "i")) || cleanText.match(new RegExp(`1\\.39[^\\d]*${numReg}`, "i"));
+        if(altDwt && parseNum(altDwt[1]) > 1000) document.getElementById('deadweight').value = parseNum(altDwt[1]);
     }
 
-    // Freeboard Normal Ballast
-    const fbVal = findVal("Normal Ballast Condition");
-    if(fbVal) document.getElementById('freeboard').value = fbVal;
+    // Freeboard Normal Ballast (In V6 is dit het 2e getal in de 'Normal Ballast Condition' rij)
+    const fbMatch = cleanText.match(new RegExp(`Normal\\s+Ballast\\s+Condition:?[^\\d]*${numReg}(?:[^\\d]*${numReg})?`, "i"));
+    if (fbMatch) {
+        document.getElementById('freeboard').value = fbMatch[2] ? parseNum(fbMatch[2]) : parseNum(fbMatch[1]);
+    }
     
     handleDimChange(); saveData();
   }
