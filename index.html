@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ShipFit 8.13 - Safe Berthing Limits</title>
+  <title>ShipFit 8.14 - Safe Berthing Limits</title>
   
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
 
@@ -177,7 +177,7 @@
 
   <header>
     <img src="zrlogo.png" alt="Logo" onerror="this.style.display='none'">
-    <h1>ShipFit 8.13</h1>
+    <h1>ShipFit 8.14</h1>
   </header>
 
   <div class="container">
@@ -668,9 +668,13 @@
         ctx.lineWidth = 15;
         ctx.stroke();
 
-        // Tekst achtergrond box
-        const textW = 340;
+        // Dynamische Tekst achtergrond box
+        const alertText = "NOT SUITABLE ON LOADING ARM NR " + selectedArmId;
+        ctx.font = 'bold 36px Arial';
+        const textMetrics = ctx.measureText(alertText);
+        const textW = textMetrics.width + 60; // 60px padding voor de breedte
         const textH = 70;
+        
         ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
         ctx.fillRect(midX - textW/2, height/2 - textH/2, textW, textH);
         
@@ -678,13 +682,12 @@
         ctx.lineWidth = 3;
         ctx.strokeRect(midX - textW/2, height/2 - textH/2, textW, textH);
 
-        // "NOT SUITABLE" Tekst
+        // De waarschuwingstekst
         ctx.fillStyle = '#d32f2f';
-        ctx.font = 'bold 36px Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText("NOT SUITABLE", midX, height / 2);
-        ctx.textBaseline = 'alphabetic'; // Reset voor de zekerheid
+        ctx.fillText(alertText, midX, height / 2);
+        ctx.textBaseline = 'alphabetic'; // Reset textBaseline
     }
   }
 
