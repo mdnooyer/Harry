@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ShipFit 8.23 - Advanced Q88 Parsing</title>
+  <title>ShipFit 8.24 - Advanced Math Parser</title>
   
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
 
@@ -105,46 +105,26 @@
 
     /* === PDF PRINT STYLES === */
     @media print {
-      /* Staande A4 modus (Portrait) */
       @page { margin: 8mm; size: A4 portrait; }
-      
       body, html { width: 100%; height: 100%; margin: 0; padding: 0; background: var(--surface) !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-      
-      /* Header compact */
       header { padding: 5px 0 !important; }
       header img { height: 30px !important; }
       header h1 { font-size: 1.2rem !important; margin: 0 !important; }
-      
-      /* Verberg onnodige UI en Specifieke Print-hide secties (zoals Controles & Limieten vinkjes) */
       .upload-section, .buttons, .print-hide { display: none !important; }
-      hr { display: none !important; } /* Lijnen verbergen om ruimte te sparen */
+      hr { display: none !important; } 
+      .container { margin: 0 !important; padding: 0 !important; width: 100% !important; max-width: none !important; box-shadow: none !important; border: none !important; page-break-after: always; }
       
-      /* Pagina 1 Container compact maken */
-      .container { 
-          margin: 0 !important; 
-          padding: 0 !important; 
-          width: 100% !important; 
-          max-width: none !important; 
-          box-shadow: none !important; 
-          border: none !important; 
-          page-break-after: always; 
-      }
-      
-      /* Formulier velden super compact voor PDF */
       .row-flex { display: flex !important; width: 100% !important; gap: 5px !important; margin-bottom: 1mm !important; }
       .form-group { flex: 1 1 0 !important; min-width: 0 !important; }
       .form-group label { font-size: 8px; margin-bottom: 0; color: #888; text-transform: uppercase; }
       .form-group input { border: none !important; border-bottom: 1px solid #eee !important; background: transparent !important; padding: 2px 0 !important; font-weight: bold; font-size: 10px; color: #000; border-radius: 0 !important; }
       
-      /* Arm Selection Group Compact */
       .arm-selection-group { padding: 4px !important; margin-bottom: 2mm !important; border: 1px solid #eee !important; }
       .radio-label { font-size: 9px !important; }
       .radio-label input { width: 12px !important; height: 12px !important; }
       
-      /* Titels */
       .section-title { margin-top: 3mm !important; margin-bottom: 1mm !important; padding-bottom: 1mm !important; font-size: 11px !important; border-bottom: 1px solid #ccc; font-weight: bold; color: #1565c0 !important; }
       
-      /* Arm blokken */
       .arm-container { margin-bottom: 3mm; margin-top: 2mm; page-break-inside: avoid; }
       .arm-header { font-size: 9px !important; margin-bottom: 2px !important; }
       .arm-row { display: flex !important; flex-direction: row !important; gap: 5px !important; width: 100%; }
@@ -153,11 +133,9 @@
       .arm-block.result-ok .arm-title { padding-bottom: 2px !important; margin-bottom: 2px !important; border-bottom: 1px solid rgba(27, 94, 32, 0.4); }
       .offset-info { font-size: 8px !important; }
       
-      /* Tugs */
       .tug-svg { width: 35px !important; }
       .tug-caption { font-size: 8px !important; margin-top: 1px !important; }
       
-      /* Uitleg blokken extra compact voor A4 Portrait fit */
       .req-text { margin-top: 2mm !important; padding: 5px 8px !important; font-size: 8.5px !important; line-height: 1.2 !important; color: #000; border-left: 3px solid var(--primary) !important; background: #f0f7fd !important; }
       .req-text p { margin: 0 0 1mm 0 !important; }
       .req-text p:last-child { margin-bottom: 0 !important; }
@@ -170,52 +148,24 @@
       body[data-print-mode="simple"] #plot-container { display: none !important; }
       body[data-print-mode="report"] #plot-container { display: block !important; padding: 0 !important; margin: 0 !important; border: none !important; background: transparent !important; box-shadow: none !important; }
       
-      /* PAGINA 2: Tabel en beide Meerplannen op 1 Staande pagina */
-      .print-page { 
-          width: 100%; 
-          height: 100%; 
-          min-height: 250mm;
-          position: relative; 
-          overflow: hidden; 
-          page-break-after: always; 
-          page-break-inside: avoid; 
-          background: white !important; 
-          display: flex; 
-          flex-direction: column;
-          align-items: center; 
-          justify-content: flex-start;
-          padding-top: 5mm;
-      }
+      .print-page { width: 100%; height: 100%; min-height: 250mm; position: relative; overflow: hidden; page-break-after: always; page-break-inside: avoid; background: white !important; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 5mm; }
       .print-page:last-child { page-break-after: auto; }
-      
-      .print-container {
-          width: 100% !important; 
-          display: flex !important; 
-          flex-direction: column !important; 
-          align-items: center !important;
-          box-sizing: border-box !important;
-      }
+      .print-container { width: 100% !important; display: flex !important; flex-direction: column !important; align-items: center !important; box-sizing: border-box !important; }
 
       .mooring-form-print { display: flex !important; flex-direction: column !important; align-items: center !important; width: 100% !important; color: #000 !important; font-family: Arial, sans-serif !important; margin: 0 0 3mm 0 !important; }
-      
-      /* Tabellen kleiner gemaakt zodat alles past */
       .mf-top-table { border-collapse: collapse; width: 100%; max-width: 100%; font-size: 9px; margin-bottom: 1mm; }
       .mf-top-table td { border: 1px solid #000; padding: 2px 4px; height: 14px; }
       .mf-top-table .mf-lbl { background: #eee; width: 100px; font-weight: bold; }
       .mf-top-table .mf-noborder { border: none !important; }
-      
       .mooring-form-print h2 { font-size: 12px; margin: 1mm 0; text-align: left; font-weight: bold; color: #000; }
-      
       .mf-main-table { border-collapse: collapse; width: 100%; max-width: 100%; border: 1px solid #000; font-size: 8.5px; } 
       .mf-main-table th, .mf-main-table td { border: 1px solid #000; padding: 3px 5px; text-align: left; }
       .mf-main-table th { text-align: center; font-weight: bold; font-size: 9px; background: #f9f9f9; }
       .mf-double-line { border-top: 3px double #000 !important; }
-      
       .mooring-form-print p { font-size: 9px; margin-top: 1.5mm; margin-bottom: 1mm; text-align: center; display: block; width: 100%; color: #000;}
 
       .canvas-wrapper { width: 100% !important; display: flex !important; align-items: center !important; justify-content: center !important; margin: 1mm 0 !important; }
       .print-container canvas { max-width: 100% !important; max-height: 90mm !important; object-fit: contain !important; border: none !important; }
-
       .plot-label { width: 100% !important; max-width: 100%; text-align: center !important; font-size: 12px !important; font-weight: bold !important; color: #000 !important; margin: 0 auto 1mm auto !important; }
     }
   </style>
@@ -224,7 +174,7 @@
 
   <header>
     <img src="zrlogo.png" alt="Logo" onerror="this.style.display='none'">
-    <h1>ShipFit 8.23</h1>
+    <h1>ShipFit 8.24</h1>
   </header>
 
   <div class="container">
@@ -427,8 +377,7 @@
   }
 
   function parseQ88Text(text) {
-      // Bescherming voor de komma's: Alleen komma's weghalen als ze exact als duizendtal-scheider functioneren
-      // (dit voorkomt dat 105,24 opeens 10524 wordt zoals bij de Suez Canal Tonnage)
+      // Voorkom dat kommagetallen breken, maar blijf af van duizendtallen
       let cText = text.replace(/(\d),(\d{3})(?!\d)/g, '$1$2');
       cText = cText.replace(/\s+/g, ' '); 
 
@@ -473,60 +422,67 @@
           if (scm.length > 0) document.getElementById('sternToCm').value = scm[0];
       }
 
-      // --- NIEUWE ROBUUSTE 1.34 PARALLEL BODY PARSER ---
+      // --- ADVANCED 1.34 MATH PARSER ---
       let pbMatch = cText.match(/1\.34\s*Parallel[\s\S]+?(?=1\.35|$)/i);
       if (pbMatch) {
           let pbSection = pbMatch[0];
-          let pbNums = pbSection.match(/\b\d+(?:[.,]\d+)?\b/g);
+          let allNums = pbSection.match(/\b\d+(?:[.,]\d+)?\b/g);
           
-          if (pbNums) {
-              let nums = pbNums.map(n => parseFloat(n.replace(',', '.'))).filter(n => n !== 1.34);
-              let fwd, aft, pb;
-              let found = false;
-
-              // Zoek naar de wiskundige relatie FWD + AFT = PB (met 0.2 marge voor afrondingen)
-              if (nums.length >= 9) {
-                  if (Math.abs(nums[0] + nums[1] - nums[2]) < 0.2 && Math.abs(nums[3] + nums[4] - nums[5]) < 0.2) {
-                      fwd = nums[3]; aft = nums[4]; pb = nums[5]; found = true; // Vertical rendering
-                  } else if (Math.abs(nums[0] + nums[3] - nums[6]) < 0.2 && Math.abs(nums[1] + nums[4] - nums[7]) < 0.2) {
-                      fwd = nums[1]; aft = nums[4]; pb = nums[7]; found = true; // Horizontal rendering
+          if (allNums) {
+              // Alle nummers > 2 en < 400 (filtert 1.34 of 1.35 ruis)
+              allNums = allNums.map(n => parseFloat(n.replace(',', '.'))).filter(n => n > 2 && n < 400 && n !== 1.34);
+              
+              let validTriplets = [];
+              // Zoek wiskundig naar FWD + AFT = PB
+              // Dit werkt ALTIJD, of PDF-js de data nou in rijen of in kolommen in het geheugen zet
+              for(let i = 0; i < allNums.length; i++) {
+                  for(let j = i + 1; j < allNums.length; j++) {
+                      for(let k = j + 1; k < allNums.length; k++) {
+                          let f = allNums[i], a = allNums[j], p = allNums[k];
+                          if (Math.abs(f + a - p) < 0.2) {
+                              if (!validTriplets.some(t => t.p === p)) {
+                                  validTriplets.push({f, a, p});
+                              }
+                          }
+                      }
                   }
               }
-              if (!found && nums.length >= 6) {
-                  if (Math.abs(nums[0] + nums[1] - nums[2]) < 0.2 && Math.abs(nums[3] + nums[4] - nums[5]) < 0.2) {
-                      fwd = nums[0]; aft = nums[1]; pb = nums[2]; found = true; 
-                  } else if (Math.abs(nums[0] + nums[2] - nums[4]) < 0.2 && Math.abs(nums[1] + nums[3] - nums[5]) < 0.2) {
-                      fwd = nums[0]; aft = nums[2]; pb = nums[4]; found = true; 
-                  }
-              }
-              if (!found && nums.length >= 3) {
-                   if (Math.abs(nums[0] + nums[1] - nums[2]) < 0.2) {
-                      fwd = nums[0]; aft = nums[1]; pb = nums[2]; found = true;
-                   }
-              }
 
-              if (found) {
-                  document.getElementById('fwd').value = fwd;
-                  document.getElementById('aft').value = aft;
-                  document.getElementById('pbTotal').value = pb;
+              if (validTriplets.length > 0) {
+                  let best = validTriplets[0];
+                  // Als we er 3 hebben (Lightship, Ballast, Summer), is Ballast standaard kolom 2 (index 1)
+                  if (validTriplets.length === 3) {
+                      let bIdx = 1; 
+                      if (pbSection.match(/Lightship\s+Summer[\s\S]+?Ballast/i)) bIdx = 2;
+                      if (pbSection.match(/Ballast[\s\S]+?Lightship[\s\S]+?Summer/i)) bIdx = 0;
+                      best = validTriplets[bIdx] || validTriplets[1];
+                  } else if (validTriplets.length === 2) {
+                      // Als er 2 condities zijn, pak de kleinste PB (Ballast vs Summer)
+                      validTriplets.sort((t1, t2) => t1.p - t2.p);
+                      best = validTriplets[0]; 
+                  }
+                  
+                  document.getElementById('fwd').value = best.f;
+                  document.getElementById('aft').value = best.a;
+                  document.getElementById('pbTotal').value = best.p;
               } else {
-                  // Fallback: Zoek specifiek BINNEN het 1.34 blok (voorkomt dat we trossen of tonnages pakken)
+                  // Fallback als de rij/kolom opmaak volledig kapot is
                   const extractFromSection = (keyword) => {
-                      const regex = new RegExp("(" + keyword + ")\\s*[:\\-]?\\s*([\\s\\S]{0,150})", "i");
+                      const regex = new RegExp("(" + keyword + ")[\\s\\S]{0,120}", "i");
                       const match = pbSection.match(regex);
-                      if (match && match[2]) {
-                          const numStrs = match[2].match(/\b\d+(?:[.,]\d+)?\b/g);
-                          if (numStrs) return numStrs.map(n => parseFloat(n.replace(',', '.')));
+                      if (match) {
+                          const numStrs = match[0].match(/\b\d+(?:[.,]\d+)?\b/g);
+                          if (numStrs) return numStrs.map(n => parseFloat(n.replace(',', '.'))).filter(n => n > 2 && n < 400 && n !== 1.34);
                       }
                       return [];
                   };
                   
-                  let fList = extractFromSection("Forward to mid-?point manifold|Forward to center|Forward");
-                  let aList = extractFromSection("Aft to mid-?point manifold|Aft to center|Aft");
-                  let pList = extractFromSection("Parallel body length|Parallel body");
-
+                  let fList = extractFromSection("Forward");
+                  let aList = extractFromSection("Aft");
+                  let pList = extractFromSection("length"); 
+                  
                   const pickBallast = (list) => {
-                      if (list.length >= 3) return list[1]; // Normal Ballast is meestal de 2e kolom
+                      if (list.length >= 3) return list[1];
                       if (list.length === 2) return list[0];
                       if (list.length === 1) return list[0];
                       return null;
@@ -535,13 +491,31 @@
                   let fV = pickBallast(fList);
                   let aV = pickBallast(aList);
                   let pV = pickBallast(pList);
-
-                  if (fV && fV < 400) document.getElementById('fwd').value = fV;
-                  if (aV && aV < 400) document.getElementById('aft').value = aV;
-                  if (pV && pV < 400) document.getElementById('pbTotal').value = pV;
+                  
+                  if (fV) document.getElementById('fwd').value = fV;
+                  if (aV) document.getElementById('aft').value = aV;
+                  if (pV) document.getElementById('pbTotal').value = pV;
               }
           }
       }
+
+      // Laatste vangnet
+      if (!document.getElementById('fwd').value) {
+          let fwd = extractNumbers(["Forward to mid-?point manifold", "Forward to center", "\\bForward\\b"]);
+          if (fwd.length >= 3) document.getElementById('fwd').value = fwd[1]; 
+          else if (fwd.length > 0) document.getElementById('fwd').value = fwd[0];
+      }
+      if (!document.getElementById('aft').value) {
+          let aft = extractNumbers(["Aft to mid-?point manifold", "Aft to center", "\\bAft\\b"]);
+          if (aft.length >= 3) document.getElementById('aft').value = aft[1];
+          else if (aft.length > 0) document.getElementById('aft').value = aft[0];
+      }
+      if (!document.getElementById('pbTotal').value) {
+          let pb = extractNumbers(["Parallel body length", "Parallel body", "\\bParallel\\b"]);
+          if (pb.length >= 3) document.getElementById('pbTotal').value = pb[1];
+          else if (pb.length > 0) document.getElementById('pbTotal').value = pb[0];
+      }
+      // --- EINDE 1.34 ---
 
       let maniMatch = cText.match(/8\.24\s*Manifold height[\s\S]+?(?=8\.25|$)/i) || cText.match(/Manifold height above[\s\S]{0,100}/i);
       if (maniMatch) {
