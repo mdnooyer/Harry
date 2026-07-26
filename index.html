@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ShipFit 8.21 - Auto-Naming PDF</title>
+  <title>ShipFit 8.22 - English UI Update</title>
   
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
 
@@ -224,7 +224,7 @@
 
   <header>
     <img src="zrlogo.png" alt="Logo" onerror="this.style.display='none'">
-    <h1>ShipFit 8.21</h1>
+    <h1>ShipFit 8.22</h1>
   </header>
 
   <div class="container">
@@ -778,7 +778,8 @@
                 const moveAft = (fwd - effReqFwd).toFixed(1); 
                 output += `<div class="arm-block result-ok"><div class="arm-title">${arm.name}</div><div class="offset-info"><div class="offset-line"><span>Fwd:</span><span class="offset-val">+${moveFwd}</span></div><div class="offset-line"><span>Aft:</span><span class="offset-val">+${moveAft}</span></div></div></div>`; 
             } else { 
-                output += `<div class="arm-block result-error"><div class="arm-title">${arm.name}</div><div>Past niet</div></div>`; 
+                // AANGEPAST NAAR HET ENGELS:
+                output += `<div class="arm-block result-error"><div class="arm-title">${arm.name}</div><div>Won't fit</div></div>`; 
             } 
         }); 
         output += '</div></div>'; return output; 
