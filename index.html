@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ShipFit 8.10 - Bulletproof Q88 Parser</title>
+  <title>ShipFit 8.11 - Ultimate Q88 Parser</title>
   
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
 
@@ -76,7 +76,7 @@
     .mooring-line { display: flex; justify-content: space-between; border-bottom: 1px dashed #eee; padding: 4px 0; }
     .mooring-line:last-child { border-bottom: none; }
 
-    /* Uitleg tekstblokken (Tug & Mooring requirements) */
+    /* Uitleg tekstblokken */
     .req-text {
         margin-top: 15px; padding: 15px; background: #e3f2fd; 
         border-left: 4px solid var(--primary); border-radius: 0 4px 4px 0;
@@ -105,26 +105,10 @@
     @media print {
       @page { margin: 10mm; size: A4 portrait; }
       
-      /* PAGINA 1 BEHOUDT ZIJN SCHERM-KLEUREN EN ACHTERGROND! */
-      body, html { 
-          width: 100%; height: 100%; margin: 0; padding: 0; 
-          background: var(--bg) !important; 
-          -webkit-print-color-adjust: exact !important; 
-          print-color-adjust: exact !important; 
-      }
-      
-      /* Verberg knoppen */
+      body, html { width: 100%; height: 100%; margin: 0; padding: 0; background: var(--bg) !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
       .upload-section, .buttons { display: none !important; }
+      .container { margin: 0 !important; padding: 5mm !important; width: 100% !important; max-width: none !important; box-shadow: none !important; border: none !important; page-break-after: always; }
       
-      /* Zorg dat de hoofdcontainer er hetzelfde uitziet als op het scherm */
-      .container { 
-          margin: 0 !important; padding: 5mm !important;
-          width: 100% !important; max-width: none !important; 
-          box-shadow: none !important; border: none !important;
-          page-break-after: always;
-      }
-      
-      /* Grid en spacing voor Pagina 1 print */
       .row-flex { display: flex !important; width: 100% !important; gap: 5px !important; margin-bottom: 2px !important; }
       .form-group { flex: 1 1 0 !important; min-width: 0 !important; }
       .form-group label { font-size: 9px; margin-bottom: 0; color: #888; text-transform: uppercase; }
@@ -134,7 +118,6 @@
       .result-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3mm; margin-bottom: 5mm; }
       .result-item { padding: 4px; font-size: 10px; border-radius: 4px; }
       
-      /* Arm blokken in print - Forceer de flex row! */
       .arm-container { margin-bottom: 5mm; }
       .arm-row { display: flex !important; flex-direction: row !important; gap: 5px !important; width: 100%; }
       .arm-block { flex: 1 1 0 !important; padding: 4px !important; border-radius: 4px !important; text-align: center !important; }
@@ -156,94 +139,36 @@
       body[data-print-mode="report"] #plot-container { display: block !important; padding: 0 !important; margin: 0 !important; border: none !important; background: transparent !important; box-shadow: none !important; }
       
       /* PAGINA 2 & 3: Tekeningen Horizontaal */
-      .print-page { 
-          width: 190mm; 
-          height: 277mm; 
-          position: relative; 
-          overflow: hidden; 
-          page-break-after: always; 
-          page-break-inside: avoid;
-          background: white !important; 
-      }
+      .print-page { width: 190mm; height: 277mm; position: relative; overflow: hidden; page-break-after: always; page-break-inside: avoid; background: white !important; }
       .print-page:last-child { page-break-after: auto; }
       
-      /* Roteert 90 graden rechtsom */
       .print-landscape-container {
           position: absolute !important; 
-          top: 138.5mm !important; 
-          left: 95mm !important;
-          width: 277mm !important;  
-          height: 190mm !important; 
-          margin-top: -95mm !important;
-          margin-left: -138.5mm !important;
+          top: 138.5mm !important; left: 95mm !important;
+          width: 277mm !important; height: 190mm !important; 
+          margin-top: -95mm !important; margin-left: -138.5mm !important;
           transform: rotate(-90deg) !important; 
-          
-          display: flex !important; 
-          flex-direction: column !important; 
-          justify-content: space-between !important; 
-          align-items: center !important;
-          padding: 8mm 15mm !important; 
-          box-sizing: border-box !important;
+          display: flex !important; flex-direction: column !important; justify-content: space-between !important; align-items: center !important;
+          padding: 8mm 15mm !important; box-sizing: border-box !important;
       }
 
-      .mooring-form-print { 
-          display: flex !important; 
-          flex-direction: column !important;
-          align-items: center !important;
-          width: 100% !important; 
-          color: #000 !important; 
-          font-family: Arial, sans-serif !important; 
-          margin: 0 !important;
-          order: 1 !important; 
-      }
-      
+      .mooring-form-print { display: flex !important; flex-direction: column !important; align-items: center !important; width: 100% !important; color: #000 !important; font-family: Arial, sans-serif !important; margin: 0 !important; order: 1 !important; }
       .mf-top-table { border-collapse: collapse; width: 100%; max-width: 450px; font-size: 11px; margin-bottom: 2mm; }
       .mf-top-table td { border: 1px solid #000; padding: 3px 6px; height: 16px; }
       .mf-top-table .mf-lbl { background: #eee; width: 100px; font-weight: bold; }
       .mf-top-table .mf-noborder { border: none !important; }
       
       .mooring-form-print h2 { font-size: 14px; margin: 2mm 0; text-align: left; font-weight: bold; color: #000; }
-      
       .mf-main-table { border-collapse: collapse; width: 100%; border: 1px solid #000; font-size: 10px; }
       .mf-main-table th, .mf-main-table td { border: 1px solid #000; padding: 4px 6px; text-align: left; }
       .mf-main-table th { text-align: center; font-weight: bold; font-size: 11px; background: #f9f9f9; }
       .mf-double-line { border-top: 3px double #000 !important; }
-      
       .mooring-form-print p { font-size: 11px; margin-top: 3mm; margin-bottom: 0; text-align: center; display: block; width: 100%; color: #000;}
 
-      .canvas-wrapper { 
-          width: 100% !important; 
-          flex: 1 1 auto !important; 
-          display: flex !important; 
-          align-items: center !important; 
-          justify-content: center !important; 
-          overflow: hidden !important; 
-          margin: 2mm 0 !important;
-          order: 2 !important;
-      }
+      .canvas-wrapper { width: 100% !important; flex: 1 1 auto !important; display: flex !important; align-items: center !important; justify-content: center !important; overflow: hidden !important; margin: 2mm 0 !important; order: 2 !important; }
+      .print-landscape-container canvas { max-width: 100% !important; max-height: 100% !important; width: auto !important; height: auto !important; border: none !important; object-fit: contain !important; }
 
-      .print-landscape-container canvas { 
-          max-width: 100% !important; 
-          max-height: 100% !important; 
-          width: auto !important; 
-          height: auto !important; 
-          border: none !important; 
-          object-fit: contain !important; 
-      }
-
-      .plot-label {
-          width: 100% !important; 
-          text-align: left !important; 
-          font-size: 16px !important; 
-          font-weight: bold !important; 
-          color: #000 !important; 
-          margin: 0 !important;
-          padding: 0 0 0 5mm !important;
-          order: 3 !important;
-          position: static !important;
-          transform: none !important;
-      }
-      
+      .plot-label { width: 100% !important; text-align: left !important; font-size: 16px !important; font-weight: bold !important; color: #000 !important; margin: 0 !important; padding: 0 0 0 5mm !important; order: 3 !important; position: static !important; transform: none !important; }
       .ps-center { justify-content: center !important; }
     }
   </style>
@@ -252,7 +177,7 @@
 
   <header>
     <img src="zrlogo.png" alt="Logo" onerror="this.style.display='none'">
-    <h1>ShipFit 8.10</h1>
+    <h1>ShipFit 8.11</h1>
   </header>
 
   <div class="container">
@@ -322,7 +247,7 @@
   <!-- Container voor Print Pages -->
   <div id="plot-container" style="display:none;">
     
-    <!-- Plot 1: Starboard (Inclusief formulier in print weergave) -->
+    <!-- Plot 1: Starboard -->
     <div id="sb-page" class="print-page">
       <div class="print-landscape-container">
           
@@ -455,21 +380,23 @@
 
   // --- KOGELVRIJE Q88 PARSER (V6 & V5 Support) ---
   function parseQ88Text(text) {
-      // 1. Maak de tekst schoon. Verwijder duizendtallen komma's om getallen goed te herkennen
-      // 50,295.40 wordt 50295.40
+      // 1. Maak de tekst schoon. Verwijder duizendtallen komma's om getallen goed te herkennen.
       let cText = text.replace(/(\d),(\d{3})/g, '$1$2');
       cText = cText.replace(/\s+/g, ' '); 
 
-      // Functie: Zoek trefwoord, pak stuk tekst erna en haal ALLE getallen eruit
-      const getNumsAfter = (keyword) => {
+      // Functie: Zoek het trefwoord, pak maximaal 120 tekens erna en haal ALLE getallen eruit.
+      const findNextNumbers = (keyword) => {
           try {
-              const regex = new RegExp(keyword + "\\s*[:\\-]?\\s*(.{0,200})", "i");
+              // Ontsnap speciale regex tekens uit het keyword
+              const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+              const regex = new RegExp(escapedKeyword + "\\s*[:\\-]?\\s*(.{0,120})", "i");
               const match = cText.match(regex);
+              
               if (match && match[1]) {
-                  // Vind alle mogelijke getallen met of zonder decimalen
-                  const numStrs = match[1].match(/\b\d+(?:\.\d+)?\b/g);
+                  // Vind alle getallen in het gematchte stuk (bijv. 182.55 of 50295.40)
+                  const numStrs = match[1].match(/\b\d+(?:[.,]\d+)?\b/g);
                   if (numStrs) {
-                      return numStrs.map(n => parseFloat(n));
+                      return numStrs.map(n => parseFloat(n.replace(',', '.')));
                   }
               }
           } catch(e) {}
@@ -478,7 +405,7 @@
 
       // 1. Scheepsnaam & IMO
       try {
-          const nameMatch = cText.match(/Vessel[’']?s\s+name.*?\)\s*[:\.]?\s*([A-Z0-9\s\-\.]+?)\s*\((\d{7})\)/i);
+          const nameMatch = cText.match(/(?:1\.2\s+)?Vessel[’']?s\s+name.*?\)\s*[:\.]?\s*([A-Z0-9\s\-\.]+?)\s*\((\d{7})\)/i);
           if (nameMatch) { 
               document.getElementById('shipName').value = nameMatch[1].trim(); 
               document.getElementById('imo').value = nameMatch[2]; 
@@ -489,78 +416,67 @@
       } catch(e) {}
 
       // 2. LOA
-      let loa = getNumsAfter("Length overall\\s*\\(LOA\\)");
-      if (loa.length === 0) loa = getNumsAfter("Length overall");
+      let loa = findNextNumbers("Length overall (LOA)");
+      if (loa.length === 0) loa = findNextNumbers("Length overall");
       if (loa.length > 0) document.getElementById('loa').value = loa[0];
 
       // 3. BEAM
-      let beam = getNumsAfter("Extreme breadth\\s*\\(Beam\\)");
-      if (beam.length === 0) beam = getNumsAfter("Extreme breadth");
-      if (beam.length === 0) beam = getNumsAfter("Beam");
+      let beam = findNextNumbers("Extreme breadth (Beam)");
+      if (beam.length === 0) beam = findNextNumbers("Extreme breadth");
+      if (beam.length === 0) beam = findNextNumbers("Beam");
       if (beam.length > 0) document.getElementById('beam').value = beam[0];
 
       // 4. BCM / SCM 
-      // V6 plaatst BCM en SCM op 1 regel achter elkaar
-      let bcmScm = getNumsAfter("Bow to center manifold.*?Stern to center manifold.*?");
-      if (bcmScm.length >= 2) {
-          document.getElementById('bowToCm').value = bcmScm[0];
-          document.getElementById('sternToCm').value = bcmScm[1];
+      // V6 plaatst beide direct achter elkaar ("Bow to center manifold (BCM)/Stern to center manifold (SCM): 91.15 Metres 91.40 Metres")
+      let bcm = findNextNumbers("Bow to center manifold");
+      if (bcm.length >= 2) {
+          // V6 structuur gevonden
+          document.getElementById('bowToCm').value = bcm[0];
+          document.getElementById('sternToCm').value = bcm[1];
       } else {
           // V5 of oudere formaten
-          let bcm = getNumsAfter("Bow to center manifold");
           if (bcm.length > 0) document.getElementById('bowToCm').value = bcm[0];
-          let scm = getNumsAfter("Stern to center manifold");
+          let scm = findNextNumbers("Stern to center manifold");
           if (scm.length > 0) document.getElementById('sternToCm').value = scm[0];
       }
 
-      // 5. FWD & AFT
-      // V6 gooit Lightship, Ballast en Summer door elkaar: FWD en AFT worden in 1 zin geplakt!
-      let fwdAft = getNumsAfter("Forward to mid-point manifold.*?Aft to mid-point manifold");
-      if (fwdAft.length >= 6) { 
-          // Resultaat = [FWD L, FWD B, FWD S, AFT L, AFT B, AFT S]. B = Ballast
-          document.getElementById('fwd').value = fwdAft[1];
-          document.getElementById('aft').value = fwdAft[4];
-      } else {
-          // Oudere formaten
-          let fwd = getNumsAfter("Forward to mid-point manifold");
-          if (fwd.length >= 3) document.getElementById('fwd').value = fwd[1];
-          else if (fwd.length > 0) document.getElementById('fwd').value = fwd[0];
+      // 5. FWD, AFT, PB
+      // V6 plaatst Lightship, Normal Ballast, Summer op 1 rij achter elkaar. We moeten de 2e kolom (Normal Ballast) hebben!
+      let fwd = findNextNumbers("Forward to mid-point manifold");
+      if (fwd.length >= 3) document.getElementById('fwd').value = fwd[1]; 
+      else if (fwd.length > 0) document.getElementById('fwd').value = fwd[0];
 
-          let aft = getNumsAfter("Aft to mid-point manifold");
-          if (aft.length >= 3) document.getElementById('aft').value = aft[1];
-          else if (aft.length > 0) document.getElementById('aft').value = aft[0];
-      }
+      let aft = findNextNumbers("Aft to mid-point manifold");
+      if (aft.length >= 3) document.getElementById('aft').value = aft[1];
+      else if (aft.length > 0) document.getElementById('aft').value = aft[0];
 
-      // 6. Parallel body (PB)
-      // V6 Plakt dit achteraan. "Parallel body length: 76.65 103.58". (De Lightship stond er ervóór)
-      let pb = getNumsAfter("Parallel body length");
-      if (pb.length >= 2) {
-          document.getElementById('pbTotal').value = pb[0]; // Is de Normal Ballast!
-      } else if (pb.length === 1) {
-          document.getElementById('pbTotal').value = pb[0];
-      }
+      let pb = findNextNumbers("Parallel body length");
+      if (pb.length >= 3) document.getElementById('pbTotal').value = pb[1];
+      else if (pb.length > 0) document.getElementById('pbTotal').value = pb[0];
 
-      // 7. MANIFOLD
-      let mani = getNumsAfter("Manifold height above");
-      if (mani.length === 0) mani = getNumsAfter("8\\.24");
+      // 6. MANIFOLD
+      let mani = findNextNumbers("Manifold height above the waterline");
+      if (mani.length === 0) mani = findNextNumbers("8.24");
       if (mani.length > 0) {
-          // Filter paragraaf nummers zoals 8.25 eruit (manifold is altijd < 30m)
+          // Manifold maat is vaak rond de 10-18m. Filter uitschieters (zoals sectie '8.25' of buisdiktes) eruit.
           let validMani = mani.filter(n => n < 30);
-          if(validMani.length > 0) document.getElementById('manifold').value = Math.max(...validMani);
+          if (validMani.length > 0) document.getElementById('manifold').value = Math.max(...validMani);
       }
 
-      // 8. SUMMER DWT (Zoekt de kolom met de gigantische getallen op de Summer regel)
-      let sum = getNumsAfter("Summer:");
-      if (sum.length === 0) sum = getNumsAfter("Summer Dwt");
-      if (sum.length === 0) sum = getNumsAfter("Summer");
-      let dwt = sum.find(n => n > 1000); // Deadweight is altijd in de tienduizenden
+      // 7. SUMMER DWT
+      let sum = findNextNumbers("Summer:");
+      if (sum.length === 0) sum = findNextNumbers("Summer Dwt");
+      if (sum.length === 0) sum = findNextNumbers("Summer");
+      
+      // Zoek naar het eerste grote getal in de reeks (Deadweight is 10.000+)
+      let dwt = sum.find(n => n > 1000); 
       if (dwt) document.getElementById('deadweight').value = dwt;
 
-      // 9. FREEBOARD
-      // V6: "Normal Ballast Condition: Draft Freeboard Displacement Deadweight"
-      let fb = getNumsAfter("Normal Ballast Condition");
+      // 8. FREEBOARD
+      // V6: "Normal Ballast Condition: 7.03 Metres 12.07 Metres 29257.85 Metric Tonnes".
+      // Volgorde V6/V5 = Draft, Freeboard, Displacement. Wij willen index 1 (Freeboard).
+      let fb = findNextNumbers("Normal Ballast Condition");
       if (fb.length >= 2) {
-          // Index 1 is de 2e kolom (Freeboard)
           document.getElementById('freeboard').value = fb[1]; 
       } else if (fb.length === 1) {
           document.getElementById('freeboard').value = fb[0];
